@@ -134,7 +134,11 @@ def cleanup_stale_temps(parent: Path, max_age_seconds: float = 600) -> list[Path
             # No marker — skip, not safe to delete.
             continue
 
-        age = now - marker.stat().st_mtime
+        try:
+            age = now - marker.stat().st_mtime
+        except FileNotFoundError:
+            # Marker was removed between exists() and stat() — skip.
+            continue
         if age > max_age_seconds:
             shutil.rmtree(entry)
             removed.append(entry)
