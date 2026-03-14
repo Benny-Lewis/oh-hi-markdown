@@ -1,0 +1,24 @@
+"""Constants and configuration for oh-hi-markdown."""
+
+VERSION = "0.1.0"
+
+# Timeouts (seconds)
+JINA_CONNECT_TIMEOUT = 10
+JINA_READ_TIMEOUT = 60
+IMAGE_CONNECT_TIMEOUT = 10
+IMAGE_READ_TIMEOUT = 30
+
+# Retry
+MAX_IMAGE_RETRIES = 3  # 4 total attempts
+BACKOFF_DELAYS = (1, 2, 4)
+MAX_REDIRECT_HOPS = 5
+
+# Resource warning thresholds
+SINGLE_IMAGE_SIZE_WARNING = 10 * 1024 * 1024  # 10 MB
+TOTAL_DOWNLOAD_SIZE_WARNING = 50 * 1024 * 1024  # 50 MB
+IMAGE_COUNT_WARNING = 50
+
+# Other
+SLUG_MAX_LENGTH = 80
+STALE_TEMP_AGE_SECONDS = 600  # 10 minutes
+JINA_API_KEY_ENV = "JINA_API_KEY"
