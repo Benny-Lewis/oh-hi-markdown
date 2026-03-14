@@ -8,7 +8,9 @@
 
 ## 1. Test Classification by Module
 
-28 unit tests grouped into 8 areas aligned with the module boundaries from `DESIGN.md`.
+28 unit tests grouped into 9 areas aligned with the module boundaries from `DESIGN.md`.
+
+Tests without formal acceptance criteria IDs (T-10, T-24, T-21, T-28) map to requirements that lack IDs in `REQUIREMENTS.md` — URL validation rules, stale cleanup safety, and CLI entry points. These are shown with parenthetical descriptions in the forward map.
 
 | Area | Module(s) | Tests | What's being verified |
 |------|-----------|-------|-----------------------|
@@ -19,6 +21,7 @@
 | Image download / dedupe | `images` | T-03, T-04, T-05, T-15, T-19, T-26 | Dedup, Content-Type, query params, filename collision, missing headers |
 | Retry / error handling | `images` | T-06, T-07, T-23 | Retry backoff, all-fail, redirect limit |
 | Temp dir / publish / rollback | `publisher` | T-08, T-09, T-18, T-20, T-21 | Conflict, force, atomic write, rollback, stale cleanup |
+| Logging | `log` | (none — cross-cutting) | Redaction filter, dual-handler setup, encoding fallback. Verified via pipeline/image tests (L-1 through L-4) and by inspection during logging module implementation |
 | Happy path (end-to-end unit) | `pipeline` | T-01, T-02 | Full pipeline with mocked HTTP — images and no-images |
 
 ---
@@ -62,7 +65,7 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 
 | Fixture | Contents | Used by |
 |---------|----------|---------|
-| `sample_fetch_result` | `FetchResult` with title, author, date, description, and markdown containing 3 image references (one PNG, one JPG, one SVG) | T-01, T-02 (no-images variant), T-13, T-14, T-25 |
+| `sample_fetch_result` | `FetchResult` with title, author, date, description, and markdown containing 3 image references (one PNG, one JPG, one SVG) | T-01, T-02 (no-images variant), T-13, T-14 (overrides title to `None`), T-25 |
 | `jina_success_response` | JSON dict matching Jina's `Accept: application/json` response format | Provider and pipeline tests |
 | `png_bytes` / `jpg_bytes` / `svg_bytes` | Minimal valid image binaries (1x1 pixel PNGs/JPGs, minimal SVG) | Image download tests |
 
@@ -85,10 +88,10 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 | T-05 | D-1 |
 | T-06 | D-6, D-7, L-1, O-1, O-2 |
 | T-07 | D-7, S-1, S-2, R-3, O-1, O-2 |
-| T-08 | S-5, O-3 |
+| T-08 | S-5 |
 | T-09 | S-6 |
 | T-10 | (URL validation — pre-fetch gate) |
-| T-11 | F-4, F-3, O-3 |
+| T-11 | F-4 |
 | T-12 | F-5 |
 | T-13 | S-1 |
 | T-14 | S-1 |
@@ -114,7 +117,7 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 | F-1 | Valid URL triggers Jina fetch | T-01, T-02 |
 | F-2 | `X-With-Generated-Alt: true` header sent | T-01 |
 | F-3 | `JINA_API_KEY` included as Bearer token when set | T-11 |
-| F-4 | Jina HTTP error or unreachable -> exit 2 | T-11 |
+| F-4 | Jina HTTP error or unreachable -> exit 2 | T-11 (HTTP error path) |
 | F-5 | Jina 429 -> exit 2, suggest API key | T-12 |
 | F-6 | Empty/whitespace markdown -> exit 2 | T-27 |
 | P-1 | Extract `![alt](url)` references | T-01, T-17, T-22 |
@@ -130,8 +133,8 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 | D-7 | Failed image skipped, warning logged | T-06, T-07 |
 | D-8 | Redirect limit exceeded -> failed | T-23 |
 | D-9 | `Referer` header set to article URL | T-01 |
-| D-10 | Single image > 10 MB warning | (verified by inspection, slice 11) |
-| D-11 | Image count > 50 warning | (verified by inspection, slice 11) |
+| D-10 | Single image > 10 MB and total download > 50 MB warnings | (verified by inspection during logging module implementation) |
+| D-11 | Image count > 50 warning | (verified by inspection during logging module implementation) |
 | D-12 | SVG saved as `.svg` | T-01 |
 | D-13 | Different URLs, same binary not deduped | T-03 |
 | D-14 | Non-`image/*` Content-Type rejected | T-19, T-26 |
@@ -145,20 +148,21 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 | S-5 | Folder exists, no `--force` -> exit 3 | T-08 |
 | S-6 | `--force` safe replacement | T-09, T-20 |
 | L-1 | Console output shows fetch/download/summary | T-01, T-06 |
-| L-2 | `ohmd.log` has full detail | (verified by inspection, slice 11) |
+| L-2 | `ohmd.log` has full detail | (verified by inspection during logging module implementation) |
 | L-3 | Log file inside output folder | T-01 |
-| L-4 | Resource warnings in console and log | (verified by inspection, slice 11) |
+| L-4 | Resource warnings in console and log | (verified by inspection during logging module implementation) |
 | O-1 | Exit 0 on success or partial success | T-01, T-02, T-06, T-07 |
 | O-2 | Summary with outcome/counts printed | T-01, T-02, T-06, T-07 |
-| O-3 | Failure summary prints "Failed" | T-08, T-11 |
+| O-3 | Failure summary prints "Failed" | — |
 
 ### Gap resolution
 
 | Gap | Resolution |
 |-----|-----------|
 | F-3 (`JINA_API_KEY` Bearer token) | Add env var assertion to T-11: set `JINA_API_KEY`, verify `Authorization: Bearer` header in `responses` request history |
+| F-4 (unreachable provider path) | T-11 covers the HTTP error path. Add a `ProviderUnreachableError` assertion (mock `requests.get` to raise `ConnectionError`) to verify the DNS/connection-timeout path also maps to exit code 2 |
 | O-3 (failure summary output) | Add assertion to T-08 and T-11 that captured stderr/stdout contains "Failed" |
-| D-10, D-11, L-2, L-4 (resource warnings and log detail) | Verified by inspection during implementation slice 11, per the plan |
+| D-10, D-11, L-2, L-4 (resource warnings and log detail) | Verified by inspection during logging module implementation (see `PLAN.md` step 7, slice 11) |
 
 ---
 
@@ -190,7 +194,7 @@ I-01 through I-05 are run manually before release, not in CI. They hit real URLs
 | I-04 | Article with many images (10+) |
 | I-05 | Article where some images are hotlink-protected |
 
-Specific URLs are selected during the integration testing phase (plan step 8). Results are documented with URL, what it exercises, and outcome.
+Specific URLs are selected during the manual integration testing phase (see `PLAN.md` step 8). Results are documented with URL, what it exercises, and outcome.
 
 ### Release criteria
 
@@ -209,4 +213,4 @@ Specific URLs are selected during the integration testing phase (plan step 8). R
 | `responses` | HTTP mocking for `requests` |
 | `ruff` | Linter and formatter |
 
-No `pytest-cov`, `pyfakefs`, or `pytest-httpserver` needed.
+No `pytest-cov` (coverage tracked via traceability map, not line-level metrics), `pyfakefs`, or `pytest-httpserver` needed.
