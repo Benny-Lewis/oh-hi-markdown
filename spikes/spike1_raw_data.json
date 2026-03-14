@@ -1,0 +1,487 @@
+[
+  {
+    "sample": "Wikipedia article (Golden Gate Bridge)",
+    "markdown_length": 2016,
+    "images_found": 9,
+    "html_img_count": 2,
+    "ref_style_count": 0,
+    "multiline_alt_count": 1,
+    "query_param_count": 0,
+    "parens_in_url_count": 0,
+    "data_uri_count": 0,
+    "empty_alt_count": 1,
+    "nested_image_link_count": 1,
+    "title_attr_count": 0,
+    "edge_cases": [
+      "MULTI-LINE ALT: 'Map showing the location of Golden Gate Bridge\\nin San Francisco, California'",
+      "NESTED IMAGE-LINK: correctly extracted inner image from: [![Golden Gate sunset thumbnail](https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/GG_sunset"
+    ],
+    "failures": [
+      "2 HTML <img> tag(s) NOT matched by regex"
+    ],
+    "matches": [
+      {
+        "alt": "Golden Gate Bridge",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg",
+        "full": "![Golden Gate Bridge](https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg)",
+        "start": 99,
+        "end": 198
+      },
+      {
+        "alt": "Joseph Strauss portrait",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Joseph_Strauss_portrait.jpg/220px-Joseph_Strauss_portrait.jpg",
+        "full": "![Joseph Strauss portrait](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Joseph_Strauss_portrait.jpg/220px-Joseph_Strauss_portrait.jpg)",
+        "start": 265,
+        "end": 412
+      },
+      {
+        "alt": "Aerial view of Golden Gate Bridge at sunset",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Golden_Gate_Bridge_as_seen_from_Battery_East.jpg/1280px-Golden_Gate_Bridge_as_seen_from_Battery_East.jpg",
+        "full": "![Aerial view of Golden Gate Bridge at sunset](https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Golden_Gate_Bridge_as_seen_from_Battery_East.jpg/1280px-Golden_Gate_Bridge_as_seen_from_Battery_East.jpg)",
+        "start": 426,
+        "end": 636
+      },
+      {
+        "alt": "",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Golden_Gate_1.svg/300px-Golden_Gate_1.svg.png",
+        "full": "![](https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Golden_Gate_1.svg/300px-Golden_Gate_1.svg.png)",
+        "start": 638,
+        "end": 746
+      },
+      {
+        "alt": "Map showing the location of Golden Gate Bridge\nin San Francisco, California",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Golden_Gate_map.png/300px-Golden_Gate_map.png",
+        "full": "![Map showing the location of Golden Gate Bridge\nin San Francisco, California](https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Golden_Gate_map.png/300px-Golden_Gate_map.png)",
+        "start": 748,
+        "end": 931
+      },
+      {
+        "alt": "Cross-section diagram of the bridge cable (showing wire arrangement)",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/GGB_cable_cross_section.svg/220px-GGB_cable_cross_section.svg.png",
+        "full": "![Cross-section diagram of the bridge cable (showing wire arrangement)](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/GGB_cable_cross_section.svg/220px-GGB_cable_cross_section.svg.png)",
+        "start": 949,
+        "end": 1145
+      },
+      {
+        "alt": "View from Fort Point with Marin Headlands in background",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/GoldenGateBridge_BakerBeach_MC.jpg/300px-GoldenGateBridge_BakerBeach_MC.jpg",
+        "full": "![View from Fort Point with Marin Headlands in background](https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/GoldenGateBridge_BakerBeach_MC.jpg/300px-GoldenGateBridge_BakerBeach_MC.jpg)",
+        "start": 1193,
+        "end": 1386
+      },
+      {
+        "alt": "Golden Gate sunset thumbnail",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/GG_sunset.jpg/100px-GG_sunset.jpg",
+        "full": "![Golden Gate sunset thumbnail](https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/GG_sunset.jpg/100px-GG_sunset.jpg)",
+        "start": 1389,
+        "end": 1513
+      },
+      {
+        "alt": "Wikimedia Commons logo",
+        "url": "https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Commons-logo.svg/30px-Commons-logo.svg.png",
+        "full": "![Wikimedia Commons logo](https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Commons-logo.svg/30px-Commons-logo.svg.png)",
+        "start": 1579,
+        "end": 1701
+      }
+    ]
+  },
+  {
+    "sample": "Python docs (re module)",
+    "markdown_length": 591,
+    "images_found": 1,
+    "html_img_count": 0,
+    "ref_style_count": 0,
+    "multiline_alt_count": 0,
+    "query_param_count": 0,
+    "parens_in_url_count": 0,
+    "data_uri_count": 0,
+    "empty_alt_count": 0,
+    "nested_image_link_count": 0,
+    "title_attr_count": 0,
+    "edge_cases": [],
+    "failures": [],
+    "matches": [
+      {
+        "alt": "Python logo",
+        "url": "https://docs.python.org/3/_static/py.svg",
+        "full": "![Python logo](https://docs.python.org/3/_static/py.svg)",
+        "start": 228,
+        "end": 284
+      }
+    ]
+  },
+  {
+    "sample": "MDN docs (img element)",
+    "markdown_length": 1375,
+    "images_found": 4,
+    "html_img_count": 3,
+    "ref_style_count": 0,
+    "multiline_alt_count": 2,
+    "query_param_count": 0,
+    "parens_in_url_count": 0,
+    "data_uri_count": 0,
+    "empty_alt_count": 0,
+    "nested_image_link_count": 0,
+    "title_attr_count": 0,
+    "edge_cases": [
+      "MULTI-LINE ALT: 'A screenshot showing the alt text displayed\\nwhen an image fails to load in a bro'",
+      "MULTI-LINE ALT: 'Diagram showing how the browser\\nselects an image source based on\\nviewport width '"
+    ],
+    "failures": [
+      "3 HTML <img> tag(s) NOT matched by regex"
+    ],
+    "matches": [
+      {
+        "alt": "MDN Web Docs logo",
+        "url": "https://developer.mozilla.org/mdn-social-share.png",
+        "full": "![MDN Web Docs logo](https://developer.mozilla.org/mdn-social-share.png)",
+        "start": 99,
+        "end": 171
+      },
+      {
+        "alt": "A screenshot showing the alt text displayed\nwhen an image fails to load in a browser window,\ndemonstrating accessibility",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img/alt-text-screenshot.png",
+        "full": "![A screenshot showing the alt text displayed\nwhen an image fails to load in a browser window,\ndemonstrating accessibility](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img/alt-text-screenshot.png)",
+        "start": 457,
+        "end": 667
+      },
+      {
+        "alt": "Diagram showing how the browser\nselects an image source based on\nviewport width and device pixel ratio",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img/responsive-image-diagram.svg",
+        "full": "![Diagram showing how the browser\nselects an image source based on\nviewport width and device pixel ratio](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img/responsive-image-diagram.svg)",
+        "start": 741,
+        "end": 938
+      },
+      {
+        "alt": "Starry night painted by Van Gogh",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/757px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg",
+        "full": "![Starry night painted by Van Gogh](https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/757px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg)",
+        "start": 1041,
+        "end": 1239
+      }
+    ]
+  },
+  {
+    "sample": "News site (BBC-style)",
+    "markdown_length": 1238,
+    "images_found": 6,
+    "html_img_count": 2,
+    "ref_style_count": 0,
+    "multiline_alt_count": 3,
+    "query_param_count": 2,
+    "parens_in_url_count": 0,
+    "data_uri_count": 0,
+    "empty_alt_count": 1,
+    "nested_image_link_count": 0,
+    "title_attr_count": 0,
+    "edge_cases": [
+      "MULTI-LINE ALT: 'Graph showing temperature anomalies from 1850 to 2024\\nwith a clear upward trend '",
+      "MULTI-LINE ALT: 'The new AI chip being manufactured\\nin a cleanroom facility'",
+      "MULTI-LINE ALT: 'Reporter standing outside parliament\\nbuilding on a rainy afternoon'"
+    ],
+    "failures": [
+      "2 HTML <img> tag(s) NOT matched by regex"
+    ],
+    "matches": [
+      {
+        "alt": "A wildfire burns through forest land in California",
+        "url": "https://ichef.bbci.co.uk/news/976/cpsprodpb/1234/production/image-2024.jpg.webp",
+        "full": "![A wildfire burns through forest land in California](https://ichef.bbci.co.uk/news/976/cpsprodpb/1234/production/image-2024.jpg.webp)",
+        "start": 43,
+        "end": 177
+      },
+      {
+        "alt": "Graph showing temperature anomalies from 1850 to 2024\nwith a clear upward trend in recent decades",
+        "url": "https://ichef.bbci.co.uk/news/800/cpsprodpb/5678/production/chart-temperatures.png?format=webply&quality=80",
+        "full": "![Graph showing temperature anomalies from 1850 to 2024\nwith a clear upward trend in recent decades](https://ichef.bbci.co.uk/news/800/cpsprodpb/5678/production/chart-temperatures.png?format=webply&quality=80)",
+        "start": 297,
+        "end": 506
+      },
+      {
+        "alt": "",
+        "url": "https://ichef.bbci.co.uk/news/1/cpsprodpb/spacer.gif",
+        "full": "![](https://ichef.bbci.co.uk/news/1/cpsprodpb/spacer.gif)",
+        "start": 508,
+        "end": 565
+      },
+      {
+        "alt": "The new AI chip being manufactured\nin a cleanroom facility",
+        "url": "https://ichef.bbci.co.uk/news/976/cpsprodpb/9012/production/ai-chip.jpg.webp",
+        "full": "![The new AI chip being manufactured\nin a cleanroom facility](https://ichef.bbci.co.uk/news/976/cpsprodpb/9012/production/ai-chip.jpg.webp)",
+        "start": 583,
+        "end": 722
+      },
+      {
+        "alt": "Reporter standing outside parliament\nbuilding on a rainy afternoon",
+        "url": "https://ichef.bbci.co.uk/news/624/cpsprodpb/3456/production/reporter-parliament.jpg.webp",
+        "full": "![Reporter standing outside parliament\nbuilding on a rainy afternoon](https://ichef.bbci.co.uk/news/624/cpsprodpb/3456/production/reporter-parliament.jpg.webp)",
+        "start": 932,
+        "end": 1091
+      },
+      {
+        "alt": "Football match action shot",
+        "url": "https://ichef.bbci.co.uk/news/976/cpsprodpb/7890/production/football-action.jpg?src=sport&quality=high",
+        "full": "![Football match action shot](https://ichef.bbci.co.uk/news/976/cpsprodpb/7890/production/football-action.jpg?src=sport&quality=high)",
+        "start": 1104,
+        "end": 1237
+      }
+    ]
+  },
+  {
+    "sample": "Ars Technica-style tech blog",
+    "markdown_length": 1558,
+    "images_found": 6,
+    "html_img_count": 0,
+    "ref_style_count": 0,
+    "multiline_alt_count": 1,
+    "query_param_count": 1,
+    "parens_in_url_count": 0,
+    "data_uri_count": 0,
+    "empty_alt_count": 0,
+    "nested_image_link_count": 1,
+    "title_attr_count": 0,
+    "edge_cases": [
+      "MULTI-LINE ALT: 'Benchmark chart comparing Framework 16 performance against competitors\\nin variou'",
+      "NESTED IMAGE-LINK: correctly extracted inner image from: [![Framework 16 rating badge](https://cdn.arstechnica.net/wp-content/uploads/badges/recommended.png)"
+    ],
+    "failures": [],
+    "matches": [
+      {
+        "alt": "The Framework Laptop 16 sitting open on a desk with its RGB keyboard lit up",
+        "url": "https://cdn.arstechnica.net/wp-content/uploads/2024/03/framework-16-hero.jpg",
+        "full": "![The Framework Laptop 16 sitting open on a desk with its RGB keyboard lit up](https://cdn.arstechnica.net/wp-content/uploads/2024/03/framework-16-hero.jpg)",
+        "start": 77,
+        "end": 233
+      },
+      {
+        "alt": "Close-up of the expansion card slots on the left side of the laptop",
+        "url": "https://cdn.arstechnica.net/wp-content/uploads/2024/03/framework-16-expansion-slots.jpg",
+        "full": "![Close-up of the expansion card slots on the left side of the laptop](https://cdn.arstechnica.net/wp-content/uploads/2024/03/framework-16-expansion-slots.jpg)",
+        "start": 390,
+        "end": 549
+      },
+      {
+        "alt": "The swappable keyboard deck modules laid out showing different configurations (numpad, macropad, LED matrix)",
+        "url": "https://cdn.arstechnica.net/wp-content/uploads/2024/03/framework-16-keyboards.jpg",
+        "full": "![The swappable keyboard deck modules laid out showing different configurations (numpad, macropad, LED matrix)](https://cdn.arstechnica.net/wp-content/uploads/2024/03/framework-16-keyboards.jpg)",
+        "start": 626,
+        "end": 820
+      },
+      {
+        "alt": "Benchmark chart comparing Framework 16 performance against competitors\nin various workloads including Cinebench R23, Ble",
+        "url": "https://cdn.arstechnica.net/wp-content/uploads/2024/03/framework-16-benchmarks.png",
+        "full": "![Benchmark chart comparing Framework 16 performance against competitors\nin various workloads including Cinebench R23, Blender,\nand 3DMark Time Spy](https://cdn.arstechnica.net/wp-content/uploads/2024/03/framework-16-benchmarks.png)",
+        "start": 927,
+        "end": 1159
+      },
+      {
+        "alt": "Battery life comparison chart",
+        "url": "https://cdn.arstechnica.net/wp-content/uploads/2024/03/framework-16-battery.svg?v=2&nocache=1",
+        "full": "![Battery life comparison chart](https://cdn.arstechnica.net/wp-content/uploads/2024/03/framework-16-battery.svg?v=2&nocache=1)",
+        "start": 1161,
+        "end": 1288
+      },
+      {
+        "alt": "Framework 16 rating badge",
+        "url": "https://cdn.arstechnica.net/wp-content/uploads/badges/recommended.png",
+        "full": "![Framework 16 rating badge](https://cdn.arstechnica.net/wp-content/uploads/badges/recommended.png)",
+        "start": 1303,
+        "end": 1402
+      }
+    ]
+  },
+  {
+    "sample": "GitHub repo (anthropic-cookbook)",
+    "markdown_length": 1109,
+    "images_found": 6,
+    "html_img_count": 0,
+    "ref_style_count": 0,
+    "multiline_alt_count": 1,
+    "query_param_count": 0,
+    "parens_in_url_count": 0,
+    "data_uri_count": 0,
+    "empty_alt_count": 0,
+    "nested_image_link_count": 3,
+    "title_attr_count": 0,
+    "edge_cases": [
+      "MULTI-LINE ALT: 'Architecture diagram showing how Claude API connects\\nto various tools and data s'",
+      "NESTED IMAGE-LINK: correctly extracted inner image from: [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.",
+      "NESTED IMAGE-LINK: correctly extracted inner image from: [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licens",
+      "NESTED IMAGE-LINK: correctly extracted inner image from: [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads"
+    ],
+    "failures": [],
+    "matches": [
+      {
+        "alt": "Anthropic Logo",
+        "url": "https://raw.githubusercontent.com/anthropics/anthropic-cookbook/main/assets/anthropic-logo.png",
+        "full": "![Anthropic Logo](https://raw.githubusercontent.com/anthropics/anthropic-cookbook/main/assets/anthropic-logo.png)",
+        "start": 22,
+        "end": 135
+      },
+      {
+        "alt": "Open in Colab",
+        "url": "https://colab.research.google.com/assets/colab-badge.svg",
+        "full": "![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)",
+        "start": 342,
+        "end": 416
+      },
+      {
+        "alt": "License: MIT",
+        "url": "https://img.shields.io/badge/License-MIT-yellow.svg",
+        "full": "![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)",
+        "start": 491,
+        "end": 559
+      },
+      {
+        "alt": "Python 3.9+",
+        "url": "https://img.shields.io/badge/python-3.9+-blue.svg",
+        "full": "![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)",
+        "start": 599,
+        "end": 664
+      },
+      {
+        "alt": "Architecture diagram showing how Claude API connects\nto various tools and data sources through\nthe Model Context Protoco",
+        "url": "https://raw.githubusercontent.com/anthropics/anthropic-cookbook/main/assets/architecture.png",
+        "full": "![Architecture diagram showing how Claude API connects\nto various tools and data sources through\nthe Model Context Protocol](https://raw.githubusercontent.com/anthropics/anthropic-cookbook/main/assets/architecture.png)",
+        "start": 719,
+        "end": 937
+      },
+      {
+        "alt": "GitHub contributors",
+        "url": "https://img.shields.io/github/contributors/anthropics/anthropic-cookbook",
+        "full": "![GitHub contributors](https://img.shields.io/github/contributors/anthropics/anthropic-cookbook)",
+        "start": 1012,
+        "end": 1108
+      }
+    ]
+  },
+  {
+    "sample": "Page with edge cases",
+    "markdown_length": 2065,
+    "images_found": 14,
+    "html_img_count": 3,
+    "ref_style_count": 1,
+    "multiline_alt_count": 2,
+    "query_param_count": 1,
+    "parens_in_url_count": 2,
+    "data_uri_count": 1,
+    "empty_alt_count": 1,
+    "nested_image_link_count": 1,
+    "title_attr_count": 1,
+    "edge_cases": [
+      "PARENS IN URL: https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Ch%C3%A2teau_de_Chambord_(aerial_view",
+      "PARENS IN URL: https://en.wikipedia.org/wiki/C%2B%2B_(programming_language",
+      "DATA URI: length=118 chars",
+      "MULTI-LINE ALT: 'Alt text for reference image][logo]\\n\\n[logo]: https://example.com/logo.png \"Logo '",
+      "MULTI-LINE ALT: 'This is an extremely long alt text that describes the image in great detail\\nspan'",
+      "TITLE ATTR captured in URL: https://example.com/image.png \"Image title text\"",
+      "NESTED IMAGE-LINK: correctly extracted inner image from: [![Click to enlarge](https://example.com/thumb.jpg)](https://example.com/full.jpg)"
+    ],
+    "failures": [
+      "3 HTML <img> tag(s) NOT matched by regex",
+      "1 reference-style image(s) NOT matched by regex",
+      "TRUNCATED URL due to parens: captured 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Ch%C3%A2teau_de_Chambord_(aerial_view' from line: ![Ch\u00e2teau de Chambord](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Ch%C3%A2teau_de_Chambord_(aerial_view).",
+      "TRUNCATED URL due to parens: captured 'https://en.wikipedia.org/wiki/C%2B%2B_(programming_language' from line: ![C++ programming language](https://en.wikipedia.org/wiki/C%2B%2B_(programming_language)/logo.png)"
+    ],
+    "matches": [
+      {
+        "alt": "Ch\u00e2teau de Chambord",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Ch%C3%A2teau_de_Chambord_(aerial_view",
+        "full": "![Ch\u00e2teau de Chambord](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Ch%C3%A2teau_de_Chambord_(aerial_view)",
+        "start": 66,
+        "end": 185
+      },
+      {
+        "alt": "C++ programming language",
+        "url": "https://en.wikipedia.org/wiki/C%2B%2B_(programming_language",
+        "full": "![C++ programming language](https://en.wikipedia.org/wiki/C%2B%2B_(programming_language)",
+        "start": 241,
+        "end": 329
+      },
+      {
+        "alt": "Tiny red dot",
+        "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+        "full": "![Tiny red dot](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==)",
+        "start": 355,
+        "end": 490
+      },
+      {
+        "alt": "Alt text for reference image][logo]\n\n[logo]: https://example.com/logo.png \"Logo Title\"\n\n## Escaped brackets\n\nThe syntax ",
+        "url": "url",
+        "full": "![Alt text for reference image][logo]\n\n[logo]: https://example.com/logo.png \"Logo Title\"\n\n## Escaped brackets\n\nThe syntax is \\![not an image](url)",
+        "start": 519,
+        "end": 665
+      },
+      {
+        "alt": "",
+        "url": "https://example.com/spacer.gif",
+        "full": "![](https://example.com/spacer.gif)",
+        "start": 697,
+        "end": 732
+      },
+      {
+        "alt": "This is an extremely long alt text that describes the image in great detail\nspanning multiple lines because the content ",
+        "url": "https://example.com/complex-image.png",
+        "full": "![This is an extremely long alt text that describes the image in great detail\nspanning multiple lines because the content creator wanted to provide a very\nthorough description of what appears in the image for accessibility purposes\nand for screen readers to be able to convey the full meaning of the ",
+        "start": 757,
+        "end": 1145
+      },
+      {
+        "alt": "Chart",
+        "url": "https://example.com/api/chart?type=bar&data=1,2,3&color=%23ff0000&size=400x300",
+        "full": "![Chart](https://example.com/api/chart?type=bar&data=1,2,3&color=%23ff0000&size=400x300)",
+        "start": 1179,
+        "end": 1267
+      },
+      {
+        "alt": "Click to enlarge",
+        "url": "https://example.com/thumb.jpg",
+        "full": "![Click to enlarge](https://example.com/thumb.jpg)",
+        "start": 1295,
+        "end": 1345
+      },
+      {
+        "alt": "Alt text",
+        "url": "https://example.com/image.png \"Image title text\"",
+        "full": "![Alt text](https://example.com/image.png \"Image title text\")",
+        "start": 1710,
+        "end": 1771
+      },
+      {
+        "alt": "First",
+        "url": "https://example.com/1.png",
+        "full": "![First](https://example.com/1.png)",
+        "start": 1793,
+        "end": 1828
+      },
+      {
+        "alt": "Second",
+        "url": "https://example.com/2.png",
+        "full": "![Second](https://example.com/2.png)",
+        "start": 1828,
+        "end": 1864
+      },
+      {
+        "alt": "Quoted image",
+        "url": "https://example.com/quoted.png",
+        "full": "![Quoted image](https://example.com/quoted.png)",
+        "start": 1896,
+        "end": 1943
+      },
+      {
+        "alt": "List image 1",
+        "url": "https://example.com/list1.png",
+        "full": "![List image 1](https://example.com/list1.png)",
+        "start": 1969,
+        "end": 2015
+      },
+      {
+        "alt": "List image 2",
+        "url": "https://example.com/list2.png",
+        "full": "![List image 2](https://example.com/list2.png)",
+        "start": 2018,
+        "end": 2064
+      }
+    ]
+  }
+]
