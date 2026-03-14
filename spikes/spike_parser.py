@@ -45,7 +45,11 @@ def fetch_jina(url: str, retries: int = 2) -> str | None:
         try:
             resp = requests.get(jina_url, headers=headers, timeout=30)
             if resp.status_code == 200:
-                data = resp.json()
+                try:
+                    data = resp.json()
+                except ValueError as e:
+                    print(f"    JSON decode error for {url}: {e}")
+                    return None
                 content = data.get("data", {}).get("content", "")
                 if content:
                     return content

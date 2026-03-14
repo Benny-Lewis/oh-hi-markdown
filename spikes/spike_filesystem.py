@@ -75,7 +75,14 @@ def publish(output_dir: Path, files: dict[str, str], force: bool = False) -> Pat
             os.rename(tmp_dir, output_dir)
         except OSError:
             # 5. Restore backup, leave temp dir in place for inspection.
-            os.rename(backup_dir, output_dir)
+            try:
+                os.rename(backup_dir, output_dir)
+            except OSError as rollback_err:
+                raise PublishError(
+                    f"Rename failed AND rollback failed: {rollback_err}. "
+                    f"Backup left at {backup_dir}, temp dir at {tmp_dir}. "
+                    f"Manual recovery required."
+                )
             raise PublishError(
                 f"Rename failed. Restored backup to {output_dir}. "
                 f"Temp dir left at {tmp_dir} for inspection."
