@@ -48,11 +48,13 @@ def publish(output_dir: Path, files: dict[str, str], force: bool = False) -> Pat
     marker = tmp_dir / ".ohmd-marker"
     marker.write_text(f"created={time.time()}\n")
 
-    # Write all output files.
+    # Write all output files, refreshing marker mtime after each to signal
+    # that this temp dir is still in active use (prevents stale cleanup).
     for rel_path, content in files.items():
         dest = tmp_dir / rel_path
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(content)
+        os.utime(marker, None)
 
     # Step 3: Rename to final path.
     if output_dir.exists():
