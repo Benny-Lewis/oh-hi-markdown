@@ -1,6 +1,6 @@
 # oh-hi-markdown — Technical Design Document
 
-**Version:** Draft (work in progress)
+**Version:** 1.1
 **Last updated:** 2026-03-13
 **Status:** Complete — all sections drafted
 **Source of truth:** `REQUIREMENTS.md` (locked v1 baseline)
@@ -25,7 +25,7 @@ pipeline.run()
  │
  ├─3─▶ images.download_all(image_refs, article_url, temp_dir) ──▶ dict[url → ImageDownload]
  │
- ├─4─▶ parser.rewrite(markdown, url_map) ──▶ rewritten markdown
+ ├─4─▶ parser.rewrite(markdown, image_refs, url_map) ──▶ rewritten markdown
  │
  ├─5─▶ writer.assemble(fetch_result, rewritten_markdown, temp_dir) ──▶ writes article.md into temp_dir
  │
@@ -49,7 +49,7 @@ sys.exit()
 | `jina` (implementation) | Jina-specific HTTP logic: URL construction, headers, API key, response parsing, error detection |
 | `parser` | Extracts `![alt](url)` image references from markdown via regex; rewrites image URLs after download |
 | `images` | Downloads images: deduplication, retry/backoff, Content-Type validation, filename resolution, resource warnings |
-| `writer` | Front matter generation (title fallback chain, slug, date normalization, field ordering), author extraction from metadata, `article.md` assembly |
+| `writer` | Front matter generation (title fallback chain, slug, date normalization, field ordering), `article.md` assembly |
 | `publisher` | Temp directory lifecycle, atomic rename, `--force` backup/restore/rollback, stale temp cleanup |
 | `log` | Dual-output logging setup (console with `✓`/`⚠` formatting + `ohmd.log` file), redaction filter for secrets |
 
@@ -81,18 +81,17 @@ class ContentProvider(Protocol):
 ```python
 @dataclass
 class FetchResult:
-    markdown: str                    # data.content — the article as markdown
-    title: str | None                # data.title
-    description: str | None          # data.description
-    url: str                         # data.url (canonical, may differ from input)
-    published_time: str | None       # data.publishedTime
-    source_url: str                  # the original user-provided URL
-    site_metadata: dict[str, Any]    # data.metadata (HTML meta tags from the page)
-    usage: dict[str, Any]            # data.usage (token count)
-    raw_response: dict[str, Any]     # entire data dict — escape hatch for future fields
+    markdown: str           # The article content as markdown
+    title: str | None       # Article title
+    author: str | None      # Article author (normalized at provider layer)
+    date: str | None        # Article publication date (normalized at provider layer)
+    description: str | None # Article description / summary
+    source_url: str         # The original URL
 ```
 
-**Design rationale:** Named fields cover what v1 actually uses. `raw_response` preserves everything Jina returns, so future versions can promote fields without changing the interface. `author` is not a named field because Jina does not reliably provide it at the top level — the writer module extracts it from `site_metadata` (checking keys like `author`, `og:author`, `article:author`). If a future provider returns author directly, `author: str | None` can be added to `FetchResult` at that point.
+**Design rationale:** This matches the locked `FetchResult` contract in `REQUIREMENTS.md`. The provider is responsible for normalizing `author` and `date` before returning — downstream modules never touch provider-specific metadata. This keeps the pluggable provider boundary clean: any provider that can extract author/date returns them directly; the writer and pipeline are provider-agnostic.
+
+**Deviation from REQUIREMENTS.md:** The spec's `FetchResult` has no canonical URL field. The Jina implementation stores the canonical URL (which may differ from the input) internally for logging but does not expose it via `FetchResult`. If needed in the future, `url: str | None` can be added to the contract.
 
 ### Jina Reader API: request construction
 
@@ -138,7 +137,7 @@ On success: parse JSON, extract fields from `data`, pack into `FetchResult`. Val
 
 ### Jina Reader API: error handling
 
-Three distinct failure modes, all mapping to exit code 2 but with different user-facing messages. Implemented as an exception hierarchy:
+Five distinct failure modes, all mapping to exit code 2 but with different user-facing messages. Implemented as an exception hierarchy:
 
 ```python
 class ProviderError(Exception):
@@ -156,9 +155,17 @@ class ProviderRateLimitError(ProviderError):
 class ProviderEmptyContentError(ProviderError):
     """Jina returned HTTP 200 but content is empty/whitespace."""
     ...
+
+class ProviderUnreachableError(ProviderError):
+    """Jina host is unreachable (DNS failure, connection refused, network timeout)."""
+    ...
+
+class ProviderDecodeError(ProviderError):
+    """Jina returned a response that cannot be decoded as text."""
+    ...
 ```
 
-**Rationale for multiple exception classes over a single exception with reason enum:** The three failure modes carry different data (HTTP error has a status code, rate limit may carry retry-after info in the future, empty content has neither). Separate classes let each carry exactly what it needs. It's also the most Pythonic pattern — the pipeline can catch each separately, and adding new handling (e.g., automatic retry for rate limits in v2) is a matter of extending one catch block.
+**Rationale for multiple exception classes over a single exception with reason enum:** The five failure modes carry different data (HTTP error has a status code, rate limit may carry retry-after info in the future, unreachable carries the underlying connection error, decode error carries encoding details, empty content has neither). Separate classes let each carry exactly what it needs. It's also the most Pythonic pattern — the pipeline can catch each separately, and adding new handling (e.g., automatic retry for rate limits in v2) is a matter of extending one catch block.
 
 ### Deferred to v2
 
@@ -196,7 +203,7 @@ The `original_match` field enables safe find-and-replace during rewriting — we
 IMAGE_PATTERN = re.compile(r'!\[(.*?)\]\(([^)]+)\)', re.DOTALL)
 ```
 
-- `(.*?)` captures alt text — any characters including newlines (non-greedy). `re.DOTALL` is not strictly necessary here since `*?` already handles newlines in Python, but is included for clarity.
+- `(.*?)` captures alt text — any characters including newlines (non-greedy). `re.DOTALL` is **required** here because Python's `.` does not match `\n` by default. Without it, `.*?` would fail to match multi-line alt text, which the requirements explicitly support.
 - `([^)]+)` captures the URL — anything except `)`.
 
 **Known limitation (T-22):** URLs containing literal parentheses (e.g., Wikipedia URLs) will not parse correctly. This is documented as best-effort per the spec. If the regex fails to extract such an image, the reference is left completely unmodified in the output.
@@ -206,16 +213,16 @@ IMAGE_PATTERN = re.compile(r'!\[(.*?)\]\(([^)]+)\)', re.DOTALL)
 **`extract(markdown: str) -> list[ImageRef]`**
 
 - Scans markdown with the regex pattern
-- For each match, checks if the URL starts with `data:` — if so, skips it (data URIs are not downloadable; left unmodified in output)
+- For each match, checks if the URL uses `http://` or `https://` scheme — only these are considered downloadable per the locked requirements. All other schemes (`data:`, `file://`, `mailto:`, relative paths, etc.) are skipped and left unmodified in output.
 - Creates an `ImageRef` for each valid match
 - Returns the list in parse order (top to bottom of markdown)
 
-**`rewrite(markdown: str, url_map: dict[str, str]) -> str`**
+**`rewrite(markdown: str, image_refs: list[ImageRef], url_map: dict[str, str]) -> str`**
 
-- Takes the original markdown and a dictionary mapping original URLs to local filenames
-- For each URL in `url_map`, finds all occurrences of the corresponding `original_match` string and replaces them with `![alt](./images/{local_filename})`
+- Takes the original markdown, the list of `ImageRef` objects from extraction, and a dictionary mapping original URLs to local filenames
+- For each `ImageRef` whose URL appears in `url_map`, replaces that specific `original_match` string with `![{alt}](./images/{local_filename})`, preserving the exact alt text from the original reference
+- This approach correctly handles the case where the same image URL appears multiple times with different alt text — each `original_match` is unique and replaced independently
 - URLs not in `url_map` (failed downloads) are left untouched
-- Handles duplicate URLs (same URL appearing multiple times) — all occurrences are replaced
 
 ---
 
@@ -292,7 +299,7 @@ After a successful HTTP response (status 200), the Content-Type determines accep
 
 ### Filename resolution
 
-Seven-step process for each image:
+Eight-step process for each image:
 
 1. **Extract filename from URL path** — everything after the last `/`, before any `?`.
 2. **URL-decode** the filename.
@@ -327,32 +334,27 @@ The slug (used as the output folder name) and the front matter `title` are produ
 
 | Priority | Condition | Slug | Front matter `title` |
 |----------|-----------|------|---------------------|
-| 1 | Jina returns a title | Slugify the title | The Jina title |
-| 2 | Title has non-ASCII characters | Transliterate then slugify | The original (non-transliterated) title |
-| 3 | No title, but markdown has an H1 heading | Slugify the H1 text | The H1 text |
-| 4 | No title, no H1, but URL has a meaningful path | Slugify the URL path | Domain + path (e.g., `"example.com/some-article"`) |
+| 1 | Jina returns a title and slugifying it produces a non-empty slug | Slugify the title | The Jina title |
+| 2 | Priority 1 slug is empty, but title contains transliterable non-ASCII characters | Transliterate (e.g., `ü` → `u`, `é` → `e`), then slugify | The original (non-transliterated) Jina title |
+| 3 | No usable title from Jina, but markdown has an H1 heading | Slugify the H1 text (with transliteration if needed, as in priority 2) | The H1 text |
+| 4 | No title, no H1, but URL has a meaningful path (more than just `/`) | Slugify the URL path component | Domain + path (e.g., `"example.com/some-article"`) |
 | 5 | All above produce an empty slug | Timestamp: `article-YYYYMMDD-HHMMSS` | The full URL |
 
 **Slugification rules:** Lowercase, replace spaces with hyphens, strip characters not in `[a-z0-9-]`, collapse consecutive hyphens, strip leading/trailing hyphens, truncate to 80 characters at a word boundary. Transliteration for non-ASCII characters (e.g., `ü` → `u`, `é` → `e`) via `unicodedata` or a small library.
 
 The pipeline calls `writer.generate_slug(fetch_result)` to get the slug for determining the final output path, before the writer assembles the full file.
 
-### Author extraction
+### Author handling
 
-Jina does not provide author at the top level. The writer extracts it from `FetchResult.site_metadata` by checking these keys in priority order:
+The writer receives `FetchResult.author` directly — author extraction from provider-specific metadata is the provider's responsibility, not the writer's. If `author` is `None`, the field is omitted from front matter entirely. If the value is a URL (some pages put author profile URLs in meta tags), it's used as-is in v1 — resolving URLs to names is a v2 concern.
 
-1. `author`
-2. `article:author`
-3. `og:author`
-4. `citation_author`
-
-First non-empty value wins. If none found, the `author` field is omitted from front matter entirely. If the value is a URL (some pages put author profile URLs in meta tags), it's used as-is in v1 — resolving URLs to names is a v2 concern.
-
-If a future provider returns author directly, `author: str | None` can be added to `FetchResult` and the writer checks that first before falling back to `site_metadata`.
+**Jina provider's author extraction:** The Jina implementation normalizes author before returning `FetchResult` by checking page metadata keys in priority order: `author`, `article:author`, `og:author`, `citation_author`. First non-empty value wins.
 
 ### Date normalization
 
-Uses `python-dateutil` (added as a dependency) to parse `FetchResult.published_time` into ISO 8601 format (`YYYY-MM-DD`). If parsing fails, the original string is included as-is in front matter and a warning is logged.
+The writer receives `FetchResult.date` already extracted by the provider. It uses `python-dateutil` (added as a dependency) to normalize the date string into ISO 8601 format (`YYYY-MM-DD`). If parsing fails, the original string is included as-is in front matter and a warning is logged. If `date` is `None`, the field is omitted from front matter.
+
+**Jina provider's date extraction:** The Jina implementation normalizes date before returning `FetchResult` by checking `data.publishedTime` first. If absent, it falls back to page metadata keys: `article:published_time`, `date`, `DC.date`. First non-empty value wins. This ensures front matter completeness even when the top-level `publishedTime` field is empty.
 
 This handles the variety of date formats Jina returns (e.g., `"Wed, 11 Mar 2026 19:06:45 GMT"`, `"2003-04-16T13:12:08Z"`) without writing custom parsers.
 
@@ -384,11 +386,12 @@ The publisher handles filesystem safety: promoting the temp directory to the fin
 
 All output is written to a temp directory named `.ohmd-tmp-{uuid}` inside the output parent directory. The temp directory contains a `.ohmd-marker` file (written immediately on creation), `article.md`, `ohmd.log`, and optionally `images/`.
 
+**Pre-flight check:** Before any temp artifacts are created, the pipeline calls `publisher.check_conflict(final_path, force)`. If the path exists and `--force` is not set, this raises `FilesystemError` immediately (exit code 3). This ensures no temp directories, log files, or downloads are created for a run that would fail anyway — per S-5 ("No files shall be modified").
+
 Once all files are written and closed:
 
-1. Check if the final output path already exists. If yes and `--force` not passed, raise an error (exit code 3).
-2. Rename the temp directory to the final output path. On macOS and Linux (same filesystem), this is atomic — it either completes fully or doesn't happen.
-3. If the rename fails (permissions, cross-filesystem, etc.), the temp directory stays in place and we exit with code 3. No partial output at the final path.
+1. Rename the temp directory to the final output path. On macOS and Linux (same filesystem), this is atomic — it either completes fully or doesn't happen.
+2. If the rename fails (permissions, cross-filesystem, etc.), the temp directory stays in place and we exit with code 3. No partial output at the final path.
 
 ### `--force` safe replacement
 
@@ -432,6 +435,8 @@ usage: ohmd [-h] [-o OUTPUT] [--force] [--version] url
 
 Both `ohmd` and `ohhimark` are registered as entry points in `pyproject.toml`, both calling the same main function.
 
+**Jina disclosure:** The `--help` epilog includes a note that the user-provided URL is sent to Jina's hosted API (`r.jina.ai`) for processing, per the requirements' transparency mandate. Example: `"Note: URLs are sent to Jina Reader (r.jina.ai) for content extraction."`
+
 ### URL validation
 
 Before any network requests, the CLI validates the URL:
@@ -454,6 +459,8 @@ The CLI catches exceptions from the pipeline and maps them to exit codes:
 | `ProviderHTTPError` | 2 | "Jina returned HTTP {status}" |
 | `ProviderRateLimitError` | 2 | "Rate limited. Setting JINA_API_KEY may help." |
 | `ProviderEmptyContentError` | 2 | "Jina returned no usable content for this URL." |
+| `ProviderUnreachableError` | 2 | "Could not reach Jina (r.jina.ai). Check your network connection." |
+| `ProviderDecodeError` | 2 | "Jina response could not be decoded as text." |
 | Filesystem conflict / write failure | 3 | Folder exists (suggests `--force`), or permissions/disk error |
 | Any unhandled exception | 4 | "Unexpected error" with details |
 
@@ -482,7 +489,7 @@ No color output in v1 — deferred to v2 with `rich`.
 
 Written to `ohmd.log` inside the output folder. Full detail: HTTP status codes, response headers, response times, retry attempts with timestamps, file sizes, URL-to-filename mappings, stack traces on errors. Standard verbose formatter.
 
-**Timing:** The log file is written into the temp directory from the start (the temp dir is created early in the pipeline). It gets promoted along with everything else during publish. No in-memory buffering needed.
+**Timing:** The file handler is attached as soon as the temp directory is created (pipeline step 6). It writes continuously throughout the run — no in-memory buffering needed. The handler is flushed and closed at pipeline step 10, before publish. The log file gets promoted along with everything else during the atomic rename.
 
 ### Redaction filter
 
@@ -505,18 +512,24 @@ The orchestrator. A single `run()` function that calls modules in sequence and c
 ```python
 def run(url: str, output_dir: Path, force: bool) -> RunResult:
     # 1. Clean up stale temp directories (publisher)
-    # 2. Fetch markdown + metadata (provider)
-    # 3. Extract image references (parser)
-    # 4. Create temp directory, attach log file handler
-    # 5. Download images (images module)
-    # 6. Rewrite markdown with local paths (parser)
-    # 7. Assemble article.md in temp directory (writer)
-    # 8. Write ohmd.log to temp directory
-    # 9. Publish temp directory to final path (publisher)
-    # 10. Return RunResult with outcome and stats
+    # 2. Check if final output path already exists (fail fast if not --force)
+    # 3. Fetch markdown + metadata (provider)
+    # 4. Generate slug from fetch result (writer)
+    # 5. Extract image references (parser)
+    # 6. Create temp directory, attach log file handler
+    # 7. Download images (images module) — create images/ subfolder only if ≥1 image succeeds
+    # 8. Rewrite markdown with local paths (parser)
+    # 9. Assemble article.md in temp directory (writer)
+    # 10. Flush and close log file handler
+    # 11. Publish temp directory to final path (publisher)
+    # 12. Return RunResult with outcome and stats
 ```
 
-**Short-circuit behavior:** If the provider raises an exception (step 2), we never reach step 3. If no images are found, steps 5 and 6 are skipped. Provider exceptions propagate to the CLI for exit code mapping — the pipeline does not catch them.
+**Short-circuit behavior:** The existing-folder check (step 2) runs before any temp artifacts are created, so a conflict exits cleanly with no leftover files — per S-5 ("No files shall be modified"). If the provider raises an exception (step 3), we never reach step 5. If no images are found, steps 7 and 8 are skipped. Provider exceptions propagate to the CLI for exit code mapping — the pipeline does not catch them.
+
+**`images/` subfolder creation (S-2):** The `images/` subfolder inside the temp directory is only created if at least one image download succeeds. If all images fail or there are no images, no `images/` folder exists in the output.
+
+**Log file timing:** The log file handler is attached to the temp directory at step 6 and writes continuously from that point. Step 10 flushes and closes the handler — it does not "write" the log as a discrete step.
 
 ### Return type
 
@@ -586,9 +599,11 @@ Exceptions flow up — the CLI catches them at the top. No module catches except
 ```python
 # Provider errors (exit code 2)
 class ProviderError(Exception): ...
-class ProviderHTTPError(ProviderError): ...       # 4xx/5xx (not 429), carries status_code
-class ProviderRateLimitError(ProviderError): ...   # 429, suggests JINA_API_KEY
+class ProviderHTTPError(ProviderError): ...         # 4xx/5xx (not 429), carries status_code
+class ProviderRateLimitError(ProviderError): ...    # 429, suggests JINA_API_KEY
 class ProviderEmptyContentError(ProviderError): ... # HTTP 200, empty/whitespace content
+class ProviderUnreachableError(ProviderError): ...  # DNS failure, connection refused, network timeout
+class ProviderDecodeError(ProviderError): ...       # Response cannot be decoded as text
 
 # Filesystem errors (exit code 3)
 class FilesystemError(Exception): ...              # Folder exists, permissions, disk full, rename failure
@@ -602,6 +617,8 @@ class FilesystemError(Exception): ...              # Folder exists, permissions,
 | Jina provider | `ProviderHTTPError` | 2 | "Jina returned HTTP {status}: {message}" |
 | Jina provider | `ProviderRateLimitError` | 2 | "Rate limited. Setting a JINA_API_KEY environment variable may help." |
 | Jina provider | `ProviderEmptyContentError` | 2 | "Jina returned no usable content for this URL." |
+| Jina provider | `ProviderUnreachableError` | 2 | "Could not reach Jina (r.jina.ai). Check your network connection." |
+| Jina provider | `ProviderDecodeError` | 2 | "Jina response could not be decoded as text." |
 | Publisher | `FilesystemError` (folder exists) | 3 | "Output folder already exists. Use --force to overwrite." |
 | Publisher | `FilesystemError` (write/rename failure) | 3 | Descriptive error with path and OS error |
 | Publisher | `FilesystemError` (`--force` rollback) | 3 | "Replacement failed. Original folder preserved." |
