@@ -431,6 +431,8 @@ Uses `argparse` with the interface defined in the spec:
 ```
 usage: ohmd [-h] [-o OUTPUT] [--force] [--version] url
        ohhimark [-h] [-o OUTPUT] [--force] [--version] url
+
+Note: URLs are sent to Jina Reader (r.jina.ai) for content extraction.
 ```
 
 Both `ohmd` and `ohhimark` are registered as entry points in `pyproject.toml`, both calling the same main function.
