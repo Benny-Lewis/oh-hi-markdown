@@ -17,7 +17,7 @@ Direct Jina Reader API access was blocked by the network proxy in this environme
 1. **Synthetic samples** (7 samples): Constructed from known Jina Reader output patterns,
    covering Wikipedia articles, documentation pages, news sites, tech blogs, GitHub READMEs,
    and a dedicated edge-case collection.
-2. **Isolated edge case tests** (10 tests): Each known edge case tested independently
+2. **Isolated edge case tests** (5 tests): Each known edge case tested independently
    with verified pass/fail results.
 
 **Action item for user**: Run `python spikes/spike_parser.py` locally with unrestricted
@@ -386,11 +386,14 @@ These tests ran against hardcoded inputs — no network required. All results ve
 | 3 | Multi-line alt text (3 lines) | MATCHED OK | All 3 lines captured in alt group |
 | 4 | Data URI `data:image/png;base64,...` | MATCHED | Needs post-extraction filter (by design) |
 | 5 | Empty alt text `![](url)` | MATCHED OK | alt="" |
-| 6 | URL with query params `?w=800&h=600` | MATCHED OK | Full query string preserved |
-| 7 | URL with fragment `#section` | MATCHED OK | Fragment preserved |
-| 8 | Regular link `[text](url)` (non-image) | CORRECTLY SKIPPED | No `!` prefix = no match |
-| 9 | Image inside code block | FALSE POSITIVE | Regex matches inside ``` blocks |
-| 10 | Reference-style `![alt][ref]` | NOT MATCHED | Known gap, rare in Jina output |
+
+Additional behaviors observed during synthetic sample analysis (not standalone tests):
+
+- URL with query params `?w=800&h=600`: full query string preserved
+- URL with fragment `#section`: fragment preserved
+- Regular link `[text](url)` (non-image): correctly skipped (no `!` prefix)
+- Image inside code block: false positive (regex matches inside ``` blocks)
+- Reference-style `![alt][ref]`: not matched (known gap, rare in Jina output)
 
 ## Recommendations
 

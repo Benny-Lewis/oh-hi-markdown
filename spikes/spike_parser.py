@@ -276,15 +276,11 @@ def main():
         print(f"  False positives (code blocks): {total_fp}")
 
     # Save raw data only if we have results to avoid overwriting a previous run.
+    # Output as a flat per-sample list to match the committed dataset schema.
     if all_results:
-        output = {
-            "results": all_results,
-            "fetched_urls": list(fetched_content.keys()),
-            "failed_urls": [u for u in TEST_URLS if u not in fetched_content],
-        }
         output_path = "spikes/spike1_raw_data.json"
         with open(output_path, "w") as f:
-            json.dump(output, f, indent=2)
+            json.dump(all_results, f, indent=2)
         print(f"\n  Raw data saved to {output_path}")
     else:
         print("\n  Skipped saving raw data (no results to write)")
