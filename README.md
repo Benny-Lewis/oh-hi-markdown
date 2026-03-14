@@ -22,6 +22,7 @@ ohhimark https://example.com/some-article   # same thing
 ## Project docs
 
 - [`REQUIREMENTS.md`](REQUIREMENTS.md) — v1 specification (locked)
+- [`DESIGN.md`](DESIGN.md) — technical design document
 - [`PLAN.md`](PLAN.md) — development lifecycle plan
 
 ## License
