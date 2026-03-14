@@ -18,11 +18,11 @@ import json
 import sys
 import time
 
+requests = None
 try:
     import requests
 except ImportError:
-    print("ERROR: 'requests' package required. Install with: pip install requests")
-    sys.exit(1)
+    pass
 
 IMAGE_PATTERN = re.compile(r'!\[(.*?)\]\(([^)]+)\)', re.DOTALL)
 
@@ -38,6 +38,9 @@ TEST_URLS = [
 
 def fetch_jina(url: str, retries: int = 2) -> str | None:
     """Fetch markdown content for a URL via Jina Reader API."""
+    if requests is None:
+        print("    Skipped (requests package not installed)")
+        return None
     jina_url = f"https://r.jina.ai/{url}"
     headers = {"Accept": "application/json", "X-With-Generated-Alt": "true"}
 

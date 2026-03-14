@@ -115,6 +115,10 @@ def cleanup_stale_temps(parent: Path, max_age_seconds: float = 600) -> list[Path
     Returns list of removed directories.
     """
     removed = []
+
+    if not parent.exists():
+        return removed
+
     now = time.time()
 
     for entry in parent.iterdir():
