@@ -116,7 +116,7 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 |----------|-------------|-----------|
 | F-1 | Valid URL triggers Jina fetch | T-01, T-02 |
 | F-2 | `X-With-Generated-Alt: true` header sent | T-01 |
-| F-3 | `JINA_API_KEY` included as Bearer token when set | T-11 |
+| F-3 | `JINA_API_KEY` included as Bearer token when set | — (see gap resolution) |
 | F-4 | Jina HTTP error or unreachable -> exit 2 | T-11 (HTTP error path) |
 | F-5 | Jina 429 -> exit 2, suggest API key | T-12 |
 | F-6 | Empty/whitespace markdown -> exit 2 | T-27 |
@@ -153,7 +153,7 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 | L-4 | Resource warnings in console and log | (verified by inspection during logging module implementation) |
 | O-1 | Exit 0 on success or partial success | T-01, T-02, T-06, T-07 |
 | O-2 | Summary with outcome/counts printed | T-01, T-02, T-06, T-07 |
-| O-3 | Failure summary prints "Failed" | — |
+| O-3 | Failure summary prints "Failed" | — (see gap resolution) |
 
 ### Gap resolution
 
@@ -201,7 +201,7 @@ Specific URLs are selected during the manual integration testing phase (see `PLA
 1. All 28 unit tests pass on all 6 CI matrix cells
 2. `ruff check` and `ruff format --check` pass
 3. Integration tests I-01 through I-05 run and documented
-4. All acceptance criteria covered per traceability map (no red in reverse map)
+4. All acceptance criteria covered per traceability map — gap resolution items (F-3, F-4 unreachable path, O-3) must have their planned assertions implemented before release
 
 ---
 
