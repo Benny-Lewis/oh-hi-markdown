@@ -81,7 +81,7 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 
 | Test | Criteria covered |
 |------|-----------------|
-| T-01 | F-1, F-2, P-1, D-1, D-4, D-5, D-9, R-1, R-2, S-1, S-2, S-3, S-4, L-1, L-3, O-1, O-2 |
+| T-01 | F-1, F-2, P-1, D-1, D-4, D-5, D-9, D-12, R-1, R-2, S-1, S-2, S-3, S-4, L-1, L-3, O-1, O-2 |
 | T-02 | F-1, S-1, S-2, S-3, O-1, O-2 |
 | T-03 | D-2, D-13 |
 | T-04 | D-1 |
@@ -144,7 +144,7 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 | S-1 | Output folder + `article.md` + `ohmd.log` always created | T-01, T-02, T-07, T-13, T-14 |
 | S-2 | `images/` only if >= 1 image succeeds | T-01, T-02, T-07 |
 | S-3 | `article.md` has front matter + markdown | T-01, T-02, T-25 |
-| S-4 | Temp dir -> atomic rename | T-18 |
+| S-4 | Temp dir -> atomic rename | T-01, T-18 |
 | S-5 | Folder exists, no `--force` -> exit 3 | T-08 |
 | S-6 | `--force` safe replacement | T-09, T-20 |
 | L-1 | Console output shows fetch/download/summary | T-01, T-06 |
