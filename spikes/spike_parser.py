@@ -39,7 +39,7 @@ TEST_URLS = [
 def fetch_jina(url: str, retries: int = 2) -> str | None:
     """Fetch markdown content for a URL via Jina Reader API."""
     jina_url = f"https://r.jina.ai/{url}"
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": "application/json", "X-With-Generated-Alt": "true"}
 
     for attempt in range(retries + 1):
         try:

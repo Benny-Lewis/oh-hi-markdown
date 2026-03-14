@@ -68,7 +68,13 @@ def publish(output_dir: Path, files: dict[str, str], force: bool = False) -> Pat
         backup_dir = parent / backup_name
 
         # 2. Rename existing folder to backup.
-        os.rename(output_dir, backup_dir)
+        try:
+            os.rename(output_dir, backup_dir)
+        except OSError as e:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            raise PublishError(
+                f"Failed to back up existing directory: {e}"
+            )
 
         # 3. Rename temp dir to final path.
         try:
