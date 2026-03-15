@@ -44,6 +44,10 @@ def test_t24_private_url_rejected():
     # Link-local.
     assert validate_url("https://169.254.1.1/page") is not None
 
+    # IPv4-mapped IPv6 addresses (bypass protection).
+    assert validate_url("https://[::ffff:192.168.1.1]/page") is not None
+    assert validate_url("https://[::ffff:127.0.0.1]/page") is not None
+
     # Public IP must pass.
     assert validate_url("https://93.184.216.34/page") is None
 

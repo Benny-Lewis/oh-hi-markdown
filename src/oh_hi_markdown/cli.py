@@ -7,15 +7,6 @@ from urllib.parse import urlparse
 
 from oh_hi_markdown.config import VERSION
 
-RFC1918_NETWORKS = (
-    ipaddress.ip_network("10.0.0.0/8"),
-    ipaddress.ip_network("172.16.0.0/12"),
-    ipaddress.ip_network("192.168.0.0/16"),
-)
-IPV4_LINK_LOCAL_NETWORK = ipaddress.ip_network("169.254.0.0/16")
-IPV4_LOOPBACK_NETWORK = ipaddress.ip_network("127.0.0.0/8")
-IPV6_LOOPBACK_ADDRESS = ipaddress.ip_address("::1")
-
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -51,16 +42,18 @@ def validate_url(url: str) -> str | None:
     except ValueError:
         return None
 
-    if address == IPV6_LOOPBACK_ADDRESS or (
-        address.version == 4 and address in IPV4_LOOPBACK_NETWORK
-    ):
+    # Unwrap IPv4-mapped IPv6 addresses (e.g., ::ffff:192.168.1.1)
+    if hasattr(address, "ipv4_mapped") and address.ipv4_mapped is not None:
+        address = address.ipv4_mapped
+
+    if address.is_loopback:
         return "Loopback IP URLs are not allowed"
 
-    if address.version == 4 and address in IPV4_LINK_LOCAL_NETWORK:
-        return "Link-local IP URLs are not allowed"
-
-    if address.version == 4 and any(address in network for network in RFC1918_NETWORKS):
+    if address.is_private:
         return "Private IP URLs are not allowed"
+
+    if address.is_link_local:
+        return "Link-local IP URLs are not allowed"
 
     return None
 
