@@ -1,6 +1,7 @@
 """CLI entry point and URL validation tests."""
 
-import pytest
+import importlib.metadata
+import subprocess
 
 from oh_hi_markdown.cli import validate_url
 
@@ -52,7 +53,25 @@ def test_t24_private_url_rejected():
     assert validate_url("https://93.184.216.34/page") is None
 
 
-@pytest.mark.skip(reason="Not yet implemented — slice 12")
 def test_t28_command_alias_equivalence():
     """T-28: Command alias equivalence: both ohmd and ohhimark entry points
     are installed and produce identical behavior."""
+    # Both commands must be available and produce identical --version output.
+    result_ohmd = subprocess.run(["ohmd", "--version"], capture_output=True, text=True)
+    result_ohhimark = subprocess.run(["ohhimark", "--version"], capture_output=True, text=True)
+
+    assert result_ohmd.returncode == 0, f"ohmd --version failed: {result_ohmd.stderr}"
+    assert result_ohhimark.returncode == 0, f"ohhimark --version failed: {result_ohhimark.stderr}"
+    assert result_ohmd.stdout == result_ohhimark.stdout, (
+        f"Version output mismatch: ohmd={result_ohmd.stdout!r}, ohhimark={result_ohhimark.stdout!r}"
+    )
+
+    # Both entry points must map to the same function via importlib.metadata.
+    eps = importlib.metadata.entry_points(group="console_scripts")
+    ep_map = {ep.name: ep.value for ep in eps}
+
+    assert "ohmd" in ep_map, "ohmd entry point not found in installed metadata"
+    assert "ohhimark" in ep_map, "ohhimark entry point not found in installed metadata"
+    assert ep_map["ohmd"] == ep_map["ohhimark"] == "oh_hi_markdown.cli:main", (
+        f"Entry points do not both resolve to oh_hi_markdown.cli:main: {ep_map}"
+    )

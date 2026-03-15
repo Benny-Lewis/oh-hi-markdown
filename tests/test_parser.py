@@ -1,7 +1,5 @@
 """Parser module tests: image extraction edge cases."""
 
-import pytest
-
 from oh_hi_markdown.parser import extract, rewrite
 
 
@@ -50,7 +48,39 @@ def test_t17_empty_alt_text():
     assert "https://example.com/img.png" not in result
 
 
-@pytest.mark.skip(reason="Not yet implemented — slice 13")
 def test_t22_parentheses_in_url():
     """T-22: Image URL containing parentheses or syntax that challenges
     the regex parser. Either processed correctly or left completely unmodified."""
+    full_url = "https://en.wikipedia.org/wiki/File:Example_(test).jpg"
+    markdown = f"![Wiki image]({full_url})"
+
+    refs = extract(markdown)
+
+    # The regex ([^)]+) stops at the first ')' inside the URL, so it either
+    # extracts the full URL (if the regex handles balanced parens) or captures
+    # a truncated URL.  Either outcome is acceptable for now; what is NOT
+    # acceptable is partial mangling of the rendered output.
+    if refs:
+        # If any ref was extracted, its URL is either the full correct URL or
+        # a truncated version.  Record which case we're in.
+        extracted_correctly = refs[0].url == full_url
+        # Both outcomes are currently valid — we're documenting behaviour here.
+        assert extracted_correctly or refs[0].url.startswith("https://"), (
+            f"Extracted URL has unexpected scheme: {refs[0].url!r}"
+        )
+
+    # No partial mangling guarantee: when rewrite() is called with the FULL
+    # url as the key in url_map (simulating a successful download lookup),
+    # the output must be either a correctly rewritten reference or the
+    # original text completely unchanged.  A partially-replaced string such
+    # as "![Wiki image](./images/001-wiki.jpg).jpg)" is a failure.
+    url_map = {full_url: "001-wiki.jpg"}
+    result = rewrite(markdown, refs, url_map)
+
+    correctly_rewritten = "![Wiki image](./images/001-wiki.jpg)" in result
+    original_preserved = markdown in result
+
+    assert correctly_rewritten or original_preserved, (
+        f"Partial mangling detected — output is neither a correct rewrite "
+        f"nor the original text.\nOriginal: {markdown!r}\nOutput:   {result!r}"
+    )
