@@ -5,10 +5,28 @@ import pytest
 from oh_hi_markdown.parser import extract, rewrite
 
 
-@pytest.mark.skip(reason="Not yet implemented — slice 6")
 def test_t16_data_uri_ignored():
     """T-16: Image with data: URI in markdown: left unmodified,
     not downloaded, not counted in summary."""
+    data_uri = (
+        "data:image/png;base64,"
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAY"
+        "AAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhg"
+        "GAWjR9awAAAABJRU5ErkJggg=="
+    )
+    markdown = (
+        f"# Article\n\n![inline img]({data_uri})\n\n![remote](https://example.com/photo.png)\n"
+    )
+
+    refs = extract(markdown)
+
+    # Only the https URL should be extracted; data URI is excluded.
+    assert len(refs) == 1
+    assert refs[0].url == "https://example.com/photo.png"
+
+    # The data URI should NOT appear in any extracted ref.
+    for ref in refs:
+        assert not ref.url.startswith("data:")
 
 
 def test_t17_empty_alt_text():

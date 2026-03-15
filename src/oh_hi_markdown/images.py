@@ -48,14 +48,34 @@ def _extract_url_filename(url: str) -> str:
     return filename
 
 
+def _extract_url_extension(url: str) -> str:
+    """Return the lowercased file extension from *url* (e.g. ``'.jpg'``).
+
+    Returns an empty string when no extension is present.
+    """
+    filename = _extract_url_filename(url)
+    if "." in filename:
+        return filename[filename.rfind(".") :].lower()
+    return ""
+
+
 def _resolve_filename(
     url: str,
     content_type: str | None,
     sequence: int,
+    assigned: set[str] | None = None,
 ) -> str:
     """Resolve the local filename for a downloaded image.
 
-    Implements the 8-step process from DESIGN.md (without collision handling).
+    Implements the 8-step process from DESIGN.md.
+
+    Args:
+        url: The image URL.
+        content_type: The Content-Type header value (may be ``None``).
+        sequence: 1-based sequence number for this image.
+        assigned: Set of filenames already assigned in this run.
+            Used for collision disambiguation (step 8).  The resolved
+            name is added to this set before returning.
     """
     # Step 1: Extract filename from URL path.
     raw_name = _extract_url_filename(url)
@@ -102,7 +122,20 @@ def _resolve_filename(
     # Step 7: Prepend sequence number — {NNN}-{sanitized-name}.{ext}
     filename = f"{sequence:03d}-{base}{ext}"
 
-    # Step 8: Collision check — skipped for this slice.
+    # Step 8: Collision disambiguation.
+    # Track collisions by base name + extension (the part without the sequence
+    # prefix), since the sequence prefix alone prevents identical full names.
+    if assigned is not None:
+        base_key = f"{base}{ext}"
+        if base_key in assigned:
+            # Try suffixes -a, -b, -c, ...
+            for suffix_ord in range(ord("a"), ord("z") + 1):
+                candidate_key = f"{base}-{chr(suffix_ord)}{ext}"
+                if candidate_key not in assigned:
+                    filename = f"{sequence:03d}-{base}-{chr(suffix_ord)}{ext}"
+                    base_key = candidate_key
+                    break
+        assigned.add(base_key)
 
     return filename
 
@@ -126,6 +159,7 @@ def download_all(
         Dict mapping original URL to :class:`ImageDownload` for successes only.
     """
     result: dict[str, ImageDownload] = {}
+    assigned_filenames: set[str] = set()
     images_dir = temp_dir / "images"
     images_dir_created = False
     sequence = 0
@@ -157,8 +191,24 @@ def download_all(
         content_type = resp.headers.get("Content-Type")
         data = resp.content
 
+        # Content-Type validation (DESIGN.md section 4 table).
+        if content_type:
+            mime = content_type.split(";")[0].strip().lower()
+            if not mime.startswith("image/"):
+                logger.warning("Rejected %s: non-image Content-Type '%s'", ref.url, content_type)
+                continue
+        else:
+            # No Content-Type header — accept only if URL has a known image extension.
+            url_ext = _extract_url_extension(ref.url)
+            if url_ext not in _KNOWN_EXTENSIONS:
+                logger.warning(
+                    "Rejected %s: no Content-Type and no known image extension",
+                    ref.url,
+                )
+                continue
+
         # Resolve filename.
-        filename = _resolve_filename(ref.url, content_type, sequence)
+        filename = _resolve_filename(ref.url, content_type, sequence, assigned_filenames)
 
         # Create images/ subfolder on first success (S-2).
         if not images_dir_created:
