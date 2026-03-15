@@ -145,6 +145,7 @@ def generate_slug(fetch_result: FetchResult) -> tuple[str, str]:
 def generate_front_matter(
     fetch_result: FetchResult,
     downloaded_timestamp: str,
+    title: str | None = None,
 ) -> str:
     """Generate YAML front matter block from a FetchResult.
 
@@ -154,11 +155,13 @@ def generate_front_matter(
     Args:
         fetch_result: The fetch result containing article metadata.
         downloaded_timestamp: ISO 8601 timestamp of when the article was downloaded.
+        title: Pre-computed title from generate_slug(). If None, derives it.
 
     Returns:
         Front matter string including the --- delimiters.
     """
-    slug, title = generate_slug(fetch_result)
+    if title is None:
+        _, title = generate_slug(fetch_result)
 
     # Normalize date if present
     date = None
