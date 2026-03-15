@@ -110,17 +110,20 @@ def generate_slug(fetch_result: FetchResult) -> tuple[str, str]:
     Returns:
         (slug, front_matter_title) tuple.
     """
-    # Priority 1: Direct slugification of the Jina title
+    # Priority 1 & 2: Slugify the Jina title, preferring transliteration
+    # when it produces a better (longer) slug.  Direct slugification strips
+    # non-ASCII chars, so "Café déjà vu" → "caf-dj-vu".  Transliteration
+    # first converts accented chars to ASCII, giving "cafe-deja-vu".
     if fetch_result.title:
-        slug = _slugify(fetch_result.title)
-        if slug:
-            return slug, fetch_result.title
-
-        # Priority 2: Transliterate then slugify the Jina title
+        slug_direct = _slugify(fetch_result.title)
         transliterated = _transliterate(fetch_result.title)
-        slug = _slugify(transliterated)
-        if slug:
-            return slug, fetch_result.title
+        slug_trans = _slugify(transliterated)
+
+        # Prefer the longer slug (transliteration preserves more content).
+        if slug_trans and (not slug_direct or len(slug_trans) > len(slug_direct)):
+            return slug_trans, fetch_result.title
+        if slug_direct:
+            return slug_direct, fetch_result.title
 
     # Priority 3: H1 heading from markdown
     h1 = _extract_h1(fetch_result.markdown)

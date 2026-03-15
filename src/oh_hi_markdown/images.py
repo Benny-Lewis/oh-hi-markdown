@@ -180,6 +180,7 @@ def download_all(
         Dict mapping original URL to :class:`ImageDownload` for successes only.
     """
     result: dict[str, ImageDownload] = {}
+    seen_urls: set[str] = set()
     assigned_filenames: set[str] = set()
     images_dir = temp_dir / "images"
     images_dir_created = False
@@ -200,10 +201,11 @@ def download_all(
     session.max_redirects = MAX_REDIRECT_HOPS
 
     for ref in image_refs:
-        # Dedup by URL: if already downloaded, skip (don't consume a number slot).
-        if ref.url in result:
+        # Dedup by URL: skip if already seen (whether it succeeded or failed).
+        if ref.url in seen_urls:
             logger.debug("Skipping duplicate URL: %s", ref.url)
             continue
+        seen_urls.add(ref.url)
 
         sequence += 1
 
@@ -278,9 +280,14 @@ def download_all(
             images_dir.mkdir(parents=True, exist_ok=True)
             images_dir_created = True
 
-        # Write file.
+        # Write file — convert OSError to FilesystemError for proper exit code.
         file_path = images_dir / filename
-        file_path.write_bytes(data)
+        try:
+            file_path.write_bytes(data)
+        except OSError as exc:
+            from oh_hi_markdown.exceptions import FilesystemError
+
+            raise FilesystemError(f"Failed to write image {filename}: {exc}") from exc
 
         image_size = len(data)
         result[ref.url] = ImageDownload(filename=filename, size=image_size)

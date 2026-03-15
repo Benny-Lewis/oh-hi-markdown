@@ -102,8 +102,7 @@ def run(
 
         logger.info("Assembled article.md")
 
-    finally:
-        # Log summary before shutting down the logger.
+        # Log summary only on normal completion (not on exceptions).
         outcome = "Partial success" if images_failed > 0 else "Success"
         logger.info(
             "%s: %d/%d images downloaded, %d failed",
@@ -113,6 +112,7 @@ def run(
             images_failed,
         )
 
+    finally:
         # Step 10: Flush and close log file handler
         shutdown_logging()
 
