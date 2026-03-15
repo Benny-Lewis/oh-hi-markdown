@@ -115,14 +115,20 @@ def test_t23_redirect_hop_limit(tmp_path):
     # Patch session.get to raise TooManyRedirects directly, since the
     # `responses` library does not simulate redirect following.
     original_session_get = real_requests.Session.get
+    call_count = 0
 
     def fake_get(self, request_url, **kwargs):
+        nonlocal call_count
         if request_url == url:
+            call_count += 1
             raise real_requests.TooManyRedirects("Exceeded 5 redirects.")
         return original_session_get(self, request_url, **kwargs)
 
     with patch.object(real_requests.Session, "get", fake_get):
         result = download_all(refs, "https://example.com/article", tmp_path)
+
+    # TooManyRedirects must NOT be retried — exactly 1 attempt.
+    assert call_count == 1
 
     # URL NOT in result (redirect limit exceeded).
     assert url not in result
