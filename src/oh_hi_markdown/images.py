@@ -4,13 +4,21 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 import requests
 
-from oh_hi_markdown.config import IMAGE_CONNECT_TIMEOUT, IMAGE_READ_TIMEOUT, VERSION
+from oh_hi_markdown.config import (
+    BACKOFF_DELAYS,
+    IMAGE_CONNECT_TIMEOUT,
+    IMAGE_READ_TIMEOUT,
+    MAX_IMAGE_RETRIES,
+    MAX_REDIRECT_HOPS,
+    VERSION,
+)
 from oh_hi_markdown.parser import ImageRef
 
 logger = logging.getLogger("ohmd")
@@ -174,6 +182,10 @@ def download_all(
     images_dir_created = False
     sequence = 0
 
+    # Use a Session with redirect hop limiting.
+    session = requests.Session()
+    session.max_redirects = MAX_REDIRECT_HOPS
+
     for ref in image_refs:
         # Dedup by URL: if already downloaded, skip (don't consume a number slot).
         if ref.url in result:
@@ -182,20 +194,48 @@ def download_all(
 
         sequence += 1
 
-        # Download the image.
-        try:
-            resp = requests.get(
-                ref.url,
-                headers={
-                    "User-Agent": f"ohmd/{VERSION}",
-                    "Referer": article_url,
-                },
-                timeout=(IMAGE_CONNECT_TIMEOUT, IMAGE_READ_TIMEOUT),
-                stream=True,
-            )
-            resp.raise_for_status()
-        except (requests.RequestException, OSError) as exc:
-            logger.warning("Failed to download %s: %s", ref.url, exc)
+        # Download the image with retry logic.
+        resp = None
+        for attempt in range(MAX_IMAGE_RETRIES + 1):
+            try:
+                resp = session.get(
+                    ref.url,
+                    headers={
+                        "User-Agent": f"ohmd/{VERSION}",
+                        "Referer": article_url,
+                    },
+                    timeout=(IMAGE_CONNECT_TIMEOUT, IMAGE_READ_TIMEOUT),
+                    stream=True,
+                )
+                resp.raise_for_status()
+                break  # Success — exit retry loop.
+            except requests.TooManyRedirects as exc:
+                # Redirect loops are persistent — no point retrying.
+                logger.warning("Failed to download %s: %s", ref.url, exc)
+                resp = None
+                break
+            except (requests.RequestException, OSError) as exc:
+                if attempt < MAX_IMAGE_RETRIES:
+                    delay = BACKOFF_DELAYS[attempt]
+                    logger.info(
+                        "Retry %d/%d for %s after error: %s (backoff %.1fs)",
+                        attempt + 1,
+                        MAX_IMAGE_RETRIES,
+                        ref.url,
+                        exc,
+                        delay,
+                    )
+                    time.sleep(delay)
+                else:
+                    logger.warning(
+                        "Failed to download %s after %d attempts: %s",
+                        ref.url,
+                        MAX_IMAGE_RETRIES + 1,
+                        exc,
+                    )
+                    resp = None
+
+        if resp is None:
             continue
 
         content_type = resp.headers.get("Content-Type")
