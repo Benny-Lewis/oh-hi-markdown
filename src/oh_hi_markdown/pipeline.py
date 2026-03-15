@@ -70,13 +70,19 @@ def run(
     temp_dir = create_temp_dir(Path(output_dir))
     setup_logging(temp_dir)
 
-    logger.info("Fetched: %s", url)
+    logger.info("Fetched: %s (title: %s)", url, fetch_result.title or "<untitled>")
+
+    # Initialize counters so the finally block can always log a summary.
+    images_found = 0
+    images_downloaded = 0
+    images_failed = 0
 
     try:
         # Step 5: Extract image references (parser)
         image_refs = extract(fetch_result.markdown)
         unique_urls = {ref.url for ref in image_refs}
         images_found = len(unique_urls)
+        logger.debug("Found %d unique image references", images_found)
 
         # Step 7: Download images (images)
         if image_refs:
@@ -97,6 +103,16 @@ def run(
         logger.info("Assembled article.md")
 
     finally:
+        # Log summary before shutting down the logger.
+        outcome = "Partial success" if images_failed > 0 else "Success"
+        logger.info(
+            "%s: %d/%d images downloaded, %d failed",
+            outcome,
+            images_downloaded,
+            images_found,
+            images_failed,
+        )
+
         # Step 10: Flush and close log file handler
         shutdown_logging()
 
@@ -104,7 +120,6 @@ def run(
     publish(temp_dir, final_path, force=force)
 
     # Step 12: Return RunResult with outcome and stats
-    outcome = "Partial success" if images_failed > 0 else "Success"
     return RunResult(
         outcome=outcome,
         images_found=images_found,

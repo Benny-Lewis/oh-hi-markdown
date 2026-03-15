@@ -14,9 +14,12 @@ import requests
 from oh_hi_markdown.config import (
     BACKOFF_DELAYS,
     IMAGE_CONNECT_TIMEOUT,
+    IMAGE_COUNT_WARNING,
     IMAGE_READ_TIMEOUT,
     MAX_IMAGE_RETRIES,
     MAX_REDIRECT_HOPS,
+    SINGLE_IMAGE_SIZE_WARNING,
+    TOTAL_DOWNLOAD_SIZE_WARNING,
     VERSION,
 )
 from oh_hi_markdown.parser import ImageRef
@@ -181,6 +184,16 @@ def download_all(
     images_dir = temp_dir / "images"
     images_dir_created = False
     sequence = 0
+    total_download_size = 0
+
+    # Resource warning: image count threshold.
+    unique_urls = {ref.url for ref in image_refs}
+    if len(unique_urls) > IMAGE_COUNT_WARNING:
+        logger.warning(
+            "Article references %d unique images (threshold: %d)",
+            len(unique_urls),
+            IMAGE_COUNT_WARNING,
+        )
 
     # Use a Session with redirect hop limiting.
     session = requests.Session()
@@ -269,7 +282,26 @@ def download_all(
         file_path = images_dir / filename
         file_path.write_bytes(data)
 
-        result[ref.url] = ImageDownload(filename=filename, size=len(data))
-        logger.info("Downloaded %s -> %s (%d bytes)", ref.url, filename, len(data))
+        image_size = len(data)
+        result[ref.url] = ImageDownload(filename=filename, size=image_size)
+        logger.info("Downloaded %s -> %s (%d bytes)", ref.url, filename, image_size)
+
+        # Resource warning: single image size threshold.
+        if image_size > SINGLE_IMAGE_SIZE_WARNING:
+            logger.warning(
+                "Image %s is %.1f MB (threshold: %d MB)",
+                filename,
+                image_size / (1024 * 1024),
+                SINGLE_IMAGE_SIZE_WARNING // (1024 * 1024),
+            )
+
+        # Resource warning: cumulative download size threshold.
+        total_download_size += image_size
+        if total_download_size > TOTAL_DOWNLOAD_SIZE_WARNING:
+            logger.warning(
+                "Total download size %.1f MB exceeds threshold of %d MB",
+                total_download_size / (1024 * 1024),
+                TOTAL_DOWNLOAD_SIZE_WARNING // (1024 * 1024),
+            )
 
     return result

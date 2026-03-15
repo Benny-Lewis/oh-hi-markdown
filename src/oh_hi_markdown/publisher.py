@@ -130,10 +130,14 @@ def publish(temp_dir: Path, final_path: Path, *, force: bool = False) -> None:
     Wraps any :class:`OSError` into a :class:`FilesystemError`.
     """
     if force and final_path.exists():
+        logger.info("Force-replacing existing output: %s", final_path)
         _publish_with_force(temp_dir, final_path)
+        logger.info("Published (force): %s", final_path)
         return
 
     try:
         os.rename(temp_dir, final_path)
     except OSError as exc:
         raise FilesystemError(f"Failed to publish output to {final_path}: {exc}") from exc
+
+    logger.info("Published: %s", final_path)

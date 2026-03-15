@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import os
+import time
 
 import requests
 
@@ -20,6 +22,8 @@ from oh_hi_markdown.exceptions import (
     ProviderUnreachableError,
 )
 from oh_hi_markdown.provider import FetchResult
+
+logger = logging.getLogger("ohmd")
 
 # Author metadata keys in priority order.
 _AUTHOR_KEYS = ("author", "article:author", "og:author", "citation_author")
@@ -49,6 +53,10 @@ class JinaProvider:
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
 
+        auth_header = headers.get("Authorization", "none")
+        logger.debug("Jina request: GET %s (Authorization: %s)", jina_url, auth_header)
+
+        start_time = time.monotonic()
         try:
             resp = requests.get(
                 jina_url,
@@ -56,7 +64,17 @@ class JinaProvider:
                 timeout=(JINA_CONNECT_TIMEOUT, JINA_READ_TIMEOUT),
             )
         except (requests.ConnectionError, requests.Timeout) as exc:
+            elapsed = time.monotonic() - start_time
+            logger.debug("Jina request failed after %.2fs: %s", elapsed, exc)
             raise ProviderUnreachableError(str(exc)) from exc
+
+        elapsed = time.monotonic() - start_time
+        logger.debug(
+            "Jina response: HTTP %d, %.2fs, %d bytes",
+            resp.status_code,
+            elapsed,
+            len(resp.content),
+        )
 
         # --- HTTP error mapping ---
         if resp.status_code == 429:
