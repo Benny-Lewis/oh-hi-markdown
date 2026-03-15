@@ -3,9 +3,13 @@
 import argparse
 import ipaddress
 import sys
+from pathlib import Path
 from urllib.parse import urlparse
 
 from oh_hi_markdown.config import VERSION
+from oh_hi_markdown.exceptions import FilesystemError, ProviderError
+from oh_hi_markdown.jina import JinaProvider
+from oh_hi_markdown.pipeline import run
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -71,6 +75,25 @@ def main() -> None:
         print(f"Error: {validation_error}", file=sys.stderr)
         sys.exit(1)
 
-    # TODO: implement pipeline call
-    print(f"Error: ohmd {VERSION} is not implemented yet", file=sys.stderr)
-    sys.exit(4)
+    provider = JinaProvider()
+    output_dir = Path(args.output)
+
+    try:
+        result = run(
+            url=args.url,
+            output_dir=output_dir,
+            force=args.force,
+            provider=provider,
+        )
+    except ProviderError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(2)
+    except FilesystemError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(3)
+    except Exception as exc:
+        print(f"Error: Unexpected error: {exc}", file=sys.stderr)
+        sys.exit(4)
+
+    print(f"Saved to {result.output_path}")
+    sys.exit(0)
