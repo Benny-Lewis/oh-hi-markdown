@@ -100,7 +100,7 @@ def run(
         shutdown_logging()
 
     # Step 11: Publish temp directory to final path (publisher)
-    publish(temp_dir, final_path)
+    publish(temp_dir, final_path, force=force)
 
     # Step 12: Return RunResult with outcome and stats
     outcome = "Partial success" if images_failed > 0 else "Success"

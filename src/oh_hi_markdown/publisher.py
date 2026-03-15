@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import uuid
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from oh_hi_markdown.exceptions import FilesystemError
 
 MARKER_FILENAME = ".ohmd-marker"
 TEMP_PREFIX = ".ohmd-tmp-"
+BACKUP_PREFIX = ".ohmd-backup-"
 
 
 def create_temp_dir(parent_dir: Path) -> Path:
@@ -43,12 +45,54 @@ def check_conflict(final_path: Path, force: bool) -> None:
         )
 
 
-def publish(temp_dir: Path, final_path: Path) -> None:
-    """Atomically rename *temp_dir* to *final_path*.
+def _publish_with_force(temp_dir: Path, final_path: Path) -> None:
+    """Replace an existing *final_path* with *temp_dir* using safe backup/rollback.
 
-    Wraps :func:`os.rename` and converts any :class:`OSError` into a
-    :class:`FilesystemError`.
+    Implements the --force replacement sequence from DESIGN.md section 6:
+
+    1. Rename existing folder to a backup: ``{folder}.ohmd-backup-{uuid}``
+    2. Rename temp directory to the final output path.
+    3. If step 2 succeeds: delete the backup folder.
+    4. If step 2 fails: restore the backup to the original name, leave the
+       temp directory in place, and raise :class:`FilesystemError`.
     """
+    backup_name = f"{final_path.name}{BACKUP_PREFIX}{uuid.uuid4()}"
+    backup_path = final_path.parent / backup_name
+
+    # Step 1: Rename existing folder to backup.
+    try:
+        os.rename(final_path, backup_path)
+    except OSError as exc:
+        raise FilesystemError(f"Failed to create backup of {final_path}: {exc}") from exc
+
+    # Step 2: Rename temp directory to final path.
+    try:
+        os.rename(temp_dir, final_path)
+    except OSError as exc:
+        # Step 2 failed — restore backup.
+        try:
+            os.rename(backup_path, final_path)
+        except OSError:
+            pass  # Best effort; original error is more important.
+        raise FilesystemError(f"Failed to publish output to {final_path}: {exc}") from exc
+
+    # Step 3: Delete backup.
+    shutil.rmtree(backup_path, ignore_errors=True)
+
+
+def publish(temp_dir: Path, final_path: Path, *, force: bool = False) -> None:
+    """Rename *temp_dir* to *final_path*, handling the --force case.
+
+    When *force* is ``True`` and *final_path* already exists, delegates to
+    :func:`_publish_with_force` for safe backup-and-replace.  Otherwise
+    performs a simple :func:`os.rename`.
+
+    Wraps any :class:`OSError` into a :class:`FilesystemError`.
+    """
+    if force and final_path.exists():
+        _publish_with_force(temp_dir, final_path)
+        return
+
     try:
         os.rename(temp_dir, final_path)
     except OSError as exc:
