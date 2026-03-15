@@ -118,6 +118,9 @@ def _resolve_filename(
         elif url_ext:
             # Use the URL extension even if unknown.
             ext = url_ext
+        elif content_type and content_type.split(";")[0].strip().lower().startswith("image/"):
+            # Unknown image/* subtype with no URL extension → use .bin
+            ext = ".bin"
 
     # Step 7: Prepend sequence number — {NNN}-{sanitized-name}.{ext}
     filename = f"{sequence:03d}-{base}{ext}"
@@ -128,13 +131,20 @@ def _resolve_filename(
     if assigned is not None:
         base_key = f"{base}{ext}"
         if base_key in assigned:
-            # Try suffixes -a, -b, -c, ...
+            # Try suffixes -a, -b, -c, ... -z, then -aa, -ab, ...
+            resolved = False
             for suffix_ord in range(ord("a"), ord("z") + 1):
                 candidate_key = f"{base}-{chr(suffix_ord)}{ext}"
                 if candidate_key not in assigned:
                     filename = f"{sequence:03d}-{base}-{chr(suffix_ord)}{ext}"
                     base_key = candidate_key
+                    resolved = True
                     break
+            if not resolved:
+                # Fallback: use sequence number as disambiguator
+                candidate_key = f"{base}-{sequence}{ext}"
+                filename = f"{sequence:03d}-{base}-{sequence}{ext}"
+                base_key = candidate_key
         assigned.add(base_key)
 
     return filename
@@ -165,12 +175,12 @@ def download_all(
     sequence = 0
 
     for ref in image_refs:
-        sequence += 1
-
-        # Dedup by URL: if already downloaded, skip but reuse entry.
+        # Dedup by URL: if already downloaded, skip (don't consume a number slot).
         if ref.url in result:
             logger.debug("Skipping duplicate URL: %s", ref.url)
             continue
+
+        sequence += 1
 
         # Download the image.
         try:
