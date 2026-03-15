@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import shutil
+import time
 import uuid
 from pathlib import Path
 
@@ -12,6 +14,44 @@ from oh_hi_markdown.exceptions import FilesystemError
 MARKER_FILENAME = ".ohmd-marker"
 TEMP_PREFIX = ".ohmd-tmp-"
 BACKUP_PREFIX = ".ohmd-backup-"
+STALE_TEMP_AGE_SECONDS = 600  # 10 minutes
+
+logger = logging.getLogger("ohmd")
+
+
+def cleanup_stale_temps(parent_dir: Path) -> None:
+    """Delete stale ``.ohmd-tmp-*`` directories inside *parent_dir*.
+
+    A directory is only deleted when both conditions are true:
+
+    1. It contains a ``.ohmd-marker`` file.
+    2. That marker file was last modified more than :data:`STALE_TEMP_AGE_SECONDS`
+       seconds ago.
+
+    Directories that lack a marker are never touched, regardless of age.
+    Individual cleanup errors are logged and swallowed so that one failure
+    does not block the others or abort the pipeline.
+    """
+    now = time.time()
+    try:
+        candidates = list(parent_dir.iterdir())
+    except OSError as exc:
+        logger.warning("Could not scan %s for stale temp dirs: %s", parent_dir, exc)
+        return
+
+    for entry in candidates:
+        if not (entry.is_dir() and entry.name.startswith(TEMP_PREFIX)):
+            continue
+        marker = entry / MARKER_FILENAME
+        if not marker.exists():
+            continue
+        try:
+            marker_age = now - marker.stat().st_mtime
+            if marker_age > STALE_TEMP_AGE_SECONDS:
+                shutil.rmtree(entry)
+                logger.info("Removed stale temp directory: %s (age %.0fs)", entry, marker_age)
+        except OSError as exc:
+            logger.warning("Could not clean up stale temp dir %s: %s", entry, exc)
 
 
 def create_temp_dir(parent_dir: Path) -> Path:

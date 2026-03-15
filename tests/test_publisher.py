@@ -1,5 +1,7 @@
 """Publisher module tests: conflict, force, atomic write, rollback, stale cleanup."""
 
+import os
+import time
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,7 +11,7 @@ import responses
 from oh_hi_markdown.exceptions import FilesystemError, ProviderHTTPError
 from oh_hi_markdown.jina import JinaProvider
 from oh_hi_markdown.pipeline import run
-from oh_hi_markdown.publisher import TEMP_PREFIX, publish
+from oh_hi_markdown.publisher import MARKER_FILENAME, TEMP_PREFIX, cleanup_stale_temps, publish
 
 TEST_URL = "https://example.com/test-article"
 JINA_URL = f"https://r.jina.ai/{TEST_URL}"
@@ -167,7 +169,38 @@ def test_t20_force_replacement_safety(tmp_path: Path) -> None:
     assert len(temp_dirs) == 0
 
 
-@pytest.mark.skip(reason="Not yet implemented — slice 10")
-def test_t21_stale_temp_cleanup_safety():
-    """T-21: Temp cleanup safety: a recently-modified temp directory exists
-    (< 10 minutes old). Cleanup does not delete it."""
+def test_t21_stale_temp_cleanup_safety(tmp_path: Path) -> None:
+    """T-21: Stale temp cleanup:
+    - `.ohmd-tmp-xxx` with marker < 10 min old → NOT deleted.
+    - `.ohmd-tmp-yyy` with marker > 10 min old → deleted.
+    - `.ohmd-tmp-zzz` without a marker → NOT deleted (regardless of age).
+    """
+    # Fresh temp dir: has marker, mtime = now (< 10 min old).
+    fresh_dir = tmp_path / f"{TEMP_PREFIX}fresh"
+    fresh_dir.mkdir()
+    fresh_marker = fresh_dir / MARKER_FILENAME
+    fresh_marker.write_text("ohmd temp directory\n", encoding="utf-8")
+
+    # Stale temp dir: has marker, mtime set to 11 minutes ago.
+    stale_dir = tmp_path / f"{TEMP_PREFIX}stale"
+    stale_dir.mkdir()
+    stale_marker = stale_dir / MARKER_FILENAME
+    stale_marker.write_text("ohmd temp directory\n", encoding="utf-8")
+    stale_time = time.time() - 660  # 11 minutes ago
+    os.utime(stale_marker, (stale_time, stale_time))
+
+    # No-marker temp dir: name matches prefix but has no .ohmd-marker.
+    nomarker_dir = tmp_path / f"{TEMP_PREFIX}nomarker"
+    nomarker_dir.mkdir()
+    (nomarker_dir / "random-file.txt").write_text("contents\n", encoding="utf-8")
+
+    cleanup_stale_temps(tmp_path)
+
+    # Stale dir (has marker, > 10 min old) must be deleted.
+    assert not stale_dir.exists(), "stale dir should have been removed"
+
+    # Fresh dir (has marker, < 10 min old) must NOT be deleted.
+    assert fresh_dir.exists(), "fresh dir must not be removed"
+
+    # No-marker dir must NOT be deleted.
+    assert nomarker_dir.exists(), "dir without marker must not be removed"

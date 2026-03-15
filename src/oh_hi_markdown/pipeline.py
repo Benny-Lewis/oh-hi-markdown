@@ -10,7 +10,7 @@ from oh_hi_markdown.images import download_all
 from oh_hi_markdown.log import setup_logging, shutdown_logging
 from oh_hi_markdown.parser import extract, rewrite
 from oh_hi_markdown.provider import ContentProvider
-from oh_hi_markdown.publisher import check_conflict, create_temp_dir, publish
+from oh_hi_markdown.publisher import check_conflict, cleanup_stale_temps, create_temp_dir, publish
 from oh_hi_markdown.writer import assemble, generate_slug
 
 logger = logging.getLogger("ohmd")
@@ -63,7 +63,8 @@ def run(
     # Step 2: Check if final output path already exists (fail fast if not --force)
     check_conflict(final_path, force)
 
-    # Step 1: Clean up stale temp directories — deferred to slice 10
+    # Step 1: Clean up stale temp directories
+    cleanup_stale_temps(Path(output_dir))
 
     # Step 6: Create temp directory, attach log file handler
     temp_dir = create_temp_dir(Path(output_dir))
