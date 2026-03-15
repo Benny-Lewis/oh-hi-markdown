@@ -27,8 +27,8 @@ _CONTENT_TYPE_MAP: dict[str, str] = {
     "image/tiff": ".tiff",
 }
 
-# Known image extensions for URL-based fallback.
-_KNOWN_EXTENSIONS: set[str] = {ext for ext in _CONTENT_TYPE_MAP.values()}
+# Known image extensions for URL-based fallback (includes .jpeg alias).
+_KNOWN_EXTENSIONS: set[str] = set(_CONTENT_TYPE_MAP.values()) | {".jpeg"}
 
 
 @dataclass

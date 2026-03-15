@@ -74,7 +74,8 @@ def run(
     try:
         # Step 5: Extract image references (parser)
         image_refs = extract(fetch_result.markdown)
-        images_found = len(image_refs)
+        unique_urls = {ref.url for ref in image_refs}
+        images_found = len(unique_urls)
 
         # Step 7: Download images (images)
         if image_refs:
@@ -102,8 +103,9 @@ def run(
     publish(temp_dir, final_path)
 
     # Step 12: Return RunResult with outcome and stats
+    outcome = "Partial success" if images_failed > 0 else "Success"
     return RunResult(
-        outcome="Success",
+        outcome=outcome,
         images_found=images_found,
         images_downloaded=images_downloaded,
         images_failed=images_failed,
