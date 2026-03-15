@@ -6,7 +6,9 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
+from oh_hi_markdown.images import download_all
 from oh_hi_markdown.log import setup_logging, shutdown_logging
+from oh_hi_markdown.parser import extract, rewrite
 from oh_hi_markdown.provider import ContentProvider
 from oh_hi_markdown.publisher import check_conflict, create_temp_dir, publish
 from oh_hi_markdown.writer import assemble, generate_slug
@@ -33,8 +35,8 @@ def run(
 ) -> RunResult:
     """Execute the full pipeline for *url*.
 
-    Implements DESIGN.md section 9 steps 2-4, 6, 9-12.
-    Steps 1, 5, 7, 8 are deferred to later slices.
+    Implements DESIGN.md section 9 steps 2-9, 11-12.
+    Step 1 (stale temp cleanup) is deferred to slice 10.
 
     Args:
         url: The article URL to fetch.
@@ -70,13 +72,25 @@ def run(
     logger.info("Fetched: %s", url)
 
     try:
-        # Step 5: Extract image references — deferred to slice 5
-        # Step 7: Download images — deferred to slice 5
-        # Step 8: Rewrite markdown — deferred to slice 5
+        # Step 5: Extract image references (parser)
+        image_refs = extract(fetch_result.markdown)
+        images_found = len(image_refs)
+
+        # Step 7: Download images (images)
+        if image_refs:
+            downloads = download_all(image_refs, url, temp_dir)
+        else:
+            downloads = {}
+
+        images_downloaded = len(downloads)
+        images_failed = images_found - images_downloaded
+
+        # Step 8: Rewrite markdown (parser)
+        url_map = {orig_url: dl.filename for orig_url, dl in downloads.items()}
+        markdown = rewrite(fetch_result.markdown, image_refs, url_map)
 
         # Step 9: Assemble article.md in temp directory (writer)
-        # For the no-image case, the markdown is passed through unchanged.
-        assemble(fetch_result, fetch_result.markdown, str(temp_dir))
+        assemble(fetch_result, markdown, str(temp_dir))
 
         logger.info("Assembled article.md")
 
@@ -90,8 +104,8 @@ def run(
     # Step 12: Return RunResult with outcome and stats
     return RunResult(
         outcome="Success",
-        images_found=0,
-        images_downloaded=0,
-        images_failed=0,
+        images_found=images_found,
+        images_downloaded=images_downloaded,
+        images_failed=images_failed,
         output_path=final_path,
     )
