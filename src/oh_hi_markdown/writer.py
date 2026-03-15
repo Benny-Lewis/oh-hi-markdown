@@ -125,14 +125,15 @@ def generate_slug(fetch_result: FetchResult) -> tuple[str, str]:
         if slug_direct:
             return slug_direct, fetch_result.title
 
-    # Priority 3: H1 heading from markdown
+    # Priority 3: H1 heading from markdown (same transliteration logic as title)
     h1 = _extract_h1(fetch_result.markdown)
     if h1:
-        slug = _slugify(h1)
-        if not slug:
-            slug = _slugify(_transliterate(h1))
-        if slug:
-            return slug, h1
+        slug_direct = _slugify(h1)
+        slug_trans = _slugify(_transliterate(h1))
+        if slug_trans and (not slug_direct or len(slug_trans) > len(slug_direct)):
+            return slug_trans, h1
+        if slug_direct:
+            return slug_direct, h1
 
     # Priority 4: URL path
     url_result = _url_path_slug(fetch_result.source_url)
@@ -224,7 +225,12 @@ def assemble(fetch_result: FetchResult, markdown: str, temp_dir: str) -> str:
     content = front_matter + "\n" + markdown
     path = os.path.join(temp_dir, "article.md")
 
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(content)
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+    except OSError as exc:
+        from oh_hi_markdown.exceptions import FilesystemError
+
+        raise FilesystemError(f"Failed to write article.md: {exc}") from exc
 
     return path
