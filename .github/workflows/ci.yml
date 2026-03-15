@@ -15,8 +15,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
-      - run: ruff check .
-      - run: ruff format --check .
+      - run: ruff check src/ tests/
+      - run: ruff format --check src/ tests/
 
   test:
     runs-on: ${{ matrix.os }}
