@@ -45,6 +45,12 @@ def run(
     Returns:
         A :class:`RunResult` describing the outcome.
     """
+    # Steps 3-4 run before step 2 because the slug (and thus the final path)
+    # depends on the fetched title. This means a conflict check still waits for
+    # the fetch, but no temp artifacts are created before the check.
+    # Note: T-08 (slice 9) tests that no files are modified on conflict — the
+    # fetch is a network call, not a file mutation, so this ordering is safe.
+
     # Step 3: Fetch markdown + metadata (provider)
     fetch_result = provider.fetch(url)
 

@@ -104,6 +104,6 @@ def test_t02_article_with_no_images(tmp_path):
     log_path = output_path / "ohmd.log"
     assert log_path.exists()
 
-    # No .ohmd-marker file (was in the temp dir, now this is the published output)
+    # .ohmd-marker persists after publish (moved from temp dir along with everything else)
     marker = output_path / ".ohmd-marker"
-    assert marker.exists()  # marker was created in temp dir and published along with it
+    assert marker.exists()

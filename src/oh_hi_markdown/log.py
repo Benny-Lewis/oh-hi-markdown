@@ -25,6 +25,11 @@ def setup_logging(temp_dir: Path) -> None:
     """
     global _file_handler, _stream_handler  # noqa: PLW0603
 
+    # Idempotency guard — close any existing handlers first to prevent
+    # handler accumulation across multiple pipeline runs or tests.
+    if _file_handler is not None or _stream_handler is not None:
+        shutdown_logging()
+
     logger = logging.getLogger(_LOGGER_NAME)
     logger.setLevel(logging.DEBUG)
 
