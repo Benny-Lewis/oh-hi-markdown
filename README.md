@@ -1,32 +1,38 @@
 # oh-hi-markdown
 
-> CLI tool that downloads web articles as clean, AI-friendly markdown with locally-stored images.
+> CLI tool for downloading web articles as clean, AI-friendly markdown with locally stored images.
 
-**Status:** Work in progress
+**Status:** Project scaffold in place. Packaging and CLI entry points exist; article download is not implemented yet.
 
 ## Install
 
-```bash
-pip install git+https://github.com/Benny-Lewis/oh-hi-markdown
-```
-
-For development:
+For local development:
 
 ```bash
-git clone https://github.com/Benny-Lewis/oh-hi-markdown
-cd oh-hi-markdown
 pip install -e ".[dev]"
 ```
 
-## Usage
+## Current commands
+
+Check the installed version:
 
 ```bash
-ohmd https://example.com/article
-# or equivalently:
-ohhimark https://example.com/article
+ohmd --version
+ohhimark --version
 ```
 
-Note: URLs are sent to Jina Reader (r.jina.ai) for content extraction.
+The article-processing command surface exists, but it currently exits with a clear non-zero error until the pipeline is implemented:
+
+```bash
+ohmd https://example.com/some-article
+ohhimark https://example.com/some-article
+```
+
+## Documentation
+
+- [`REQUIREMENTS.md`](REQUIREMENTS.md): v1 specification
+- [`DESIGN.md`](DESIGN.md): technical design document
+- [`PLAN.md`](PLAN.md): development lifecycle plan
 
 ## License
 
