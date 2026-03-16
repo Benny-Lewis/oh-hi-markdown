@@ -49,6 +49,46 @@ def _is_private_url(url: str) -> bool:
     return address.is_loopback or address.is_private or address.is_link_local
 
 
+def _safe_get(
+    session: requests.Session,
+    url: str,
+    *,
+    headers: dict[str, str],
+    timeout: tuple[int, int],
+) -> requests.Response:
+    """GET *url* following redirects manually with SSRF validation at each hop.
+
+    Raises ``requests.TooManyRedirects`` if the hop count exceeds
+    ``session.max_redirects``.  Raises ``requests.ConnectionError`` if a
+    redirect target resolves to a private/internal address.
+    """
+    current_url = url
+    for hop in range(session.max_redirects + 1):
+        resp = session.get(
+            current_url,
+            headers=headers,
+            timeout=timeout,
+            stream=True,
+            allow_redirects=False,
+        )
+        if resp.is_redirect:
+            location = resp.headers.get("Location", "")
+            if not location:
+                break  # No Location header — treat as final response.
+            # Resolve relative redirects.
+            if location.startswith("/"):
+                parsed = urlparse(current_url)
+                location = f"{parsed.scheme}://{parsed.netloc}{location}"
+            if _is_private_url(location):
+                raise requests.ConnectionError(
+                    f"Redirect to private/internal address blocked: {location}"
+                )
+            current_url = location
+            continue
+        return resp
+    raise requests.TooManyRedirects(f"Exceeded {session.max_redirects} redirects for {url}")
+
+
 # Content-Type to extension mapping per DESIGN.md section 4.
 _CONTENT_TYPE_MAP: dict[str, str] = {
     "image/png": ".png",
@@ -233,18 +273,23 @@ def download_all(
 
         sequence += 1
 
+        # SSRF: validate initial URL before making ANY request.
+        if _is_private_url(ref.url):
+            logger.warning("Rejected %s: private/internal address", ref.url)
+            continue
+
         # Download the image with retry logic.
         resp = None
         for attempt in range(MAX_IMAGE_RETRIES + 1):
             try:
-                resp = session.get(
+                resp = _safe_get(
+                    session,
                     ref.url,
                     headers={
                         "User-Agent": f"ohmd/{VERSION}",
                         "Referer": article_url,
                     },
                     timeout=(IMAGE_CONNECT_TIMEOUT, IMAGE_READ_TIMEOUT),
-                    stream=True,
                 )
                 resp.raise_for_status()
                 break  # Success — exit retry loop.
@@ -275,13 +320,6 @@ def download_all(
                     resp = None
 
         if resp is None:
-            continue
-
-        # SSRF protection: validate the final URL after redirects.
-        if _is_private_url(resp.url):
-            logger.warning(
-                "Rejected %s: redirected to private/internal address %s", ref.url, resp.url
-            )
             continue
 
         # Content-Type validation BEFORE downloading body (DESIGN.md section 4).
