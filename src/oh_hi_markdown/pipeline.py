@@ -113,7 +113,10 @@ def run(
         )
 
     finally:
-        # Step 10: Flush and close log file handler
+        # Step 10: Flush and close log file handler.
+        # Note: on failure, temp_dir is intentionally NOT cleaned up here —
+        # the stale temp cleanup mechanism (cleanup_stale_temps) handles
+        # orphaned directories on the next run after a 10-minute grace period.
         shutdown_logging()
 
     # Step 11: Publish temp directory to final path (publisher)

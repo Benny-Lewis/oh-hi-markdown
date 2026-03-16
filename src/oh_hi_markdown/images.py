@@ -22,9 +22,32 @@ from oh_hi_markdown.config import (
     TOTAL_DOWNLOAD_SIZE_WARNING,
     VERSION,
 )
+from oh_hi_markdown.exceptions import FilesystemError
 from oh_hi_markdown.parser import ImageRef
 
 logger = logging.getLogger("ohmd")
+
+
+def _is_private_url(url: str) -> bool:
+    """Return True if *url* resolves to a private/loopback/link-local address.
+
+    Used to prevent SSRF via image redirect — validates the final URL after
+    redirects are followed.
+    """
+    import ipaddress
+
+    parsed = urlparse(url)
+    hostname = (parsed.hostname or "").lower()
+    if hostname == "localhost":
+        return True
+    try:
+        address = ipaddress.ip_address(hostname)
+    except ValueError:
+        return False
+    if hasattr(address, "ipv4_mapped") and address.ipv4_mapped is not None:
+        address = address.ipv4_mapped
+    return address.is_loopback or address.is_private or address.is_link_local
+
 
 # Content-Type to extension mapping per DESIGN.md section 4.
 _CONTENT_TYPE_MAP: dict[str, str] = {
@@ -184,6 +207,7 @@ def download_all(
     assigned_filenames: set[str] = set()
     images_dir = temp_dir / "images"
     images_dir_created = False
+    size_warning_emitted = False
     sequence = 0
     total_download_size = 0
 
@@ -253,10 +277,15 @@ def download_all(
         if resp is None:
             continue
 
-        content_type = resp.headers.get("Content-Type")
-        data = resp.content
+        # SSRF protection: validate the final URL after redirects.
+        if _is_private_url(resp.url):
+            logger.warning(
+                "Rejected %s: redirected to private/internal address %s", ref.url, resp.url
+            )
+            continue
 
-        # Content-Type validation (DESIGN.md section 4 table).
+        # Content-Type validation BEFORE downloading body (DESIGN.md section 4).
+        content_type = resp.headers.get("Content-Type")
         if content_type:
             mime = content_type.split(";")[0].strip().lower()
             if not mime.startswith("image/"):
@@ -272,6 +301,9 @@ def download_all(
                 )
                 continue
 
+        # Download body only after Content-Type and SSRF checks pass.
+        data = resp.content
+
         # Resolve filename.
         filename = _resolve_filename(ref.url, content_type, sequence, assigned_filenames)
 
@@ -285,8 +317,6 @@ def download_all(
         try:
             file_path.write_bytes(data)
         except OSError as exc:
-            from oh_hi_markdown.exceptions import FilesystemError
-
             raise FilesystemError(f"Failed to write image {filename}: {exc}") from exc
 
         image_size = len(data)
@@ -302,13 +332,14 @@ def download_all(
                 SINGLE_IMAGE_SIZE_WARNING // (1024 * 1024),
             )
 
-        # Resource warning: cumulative download size threshold.
+        # Resource warning: cumulative download size threshold (emit once).
         total_download_size += image_size
-        if total_download_size > TOTAL_DOWNLOAD_SIZE_WARNING:
+        if total_download_size > TOTAL_DOWNLOAD_SIZE_WARNING and not size_warning_emitted:
             logger.warning(
                 "Total download size %.1f MB exceeds threshold of %d MB",
                 total_download_size / (1024 * 1024),
                 TOTAL_DOWNLOAD_SIZE_WARNING // (1024 * 1024),
             )
+            size_warning_emitted = True
 
     return result

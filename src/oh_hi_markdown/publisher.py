@@ -9,12 +9,12 @@ import time
 import uuid
 from pathlib import Path
 
+from oh_hi_markdown.config import STALE_TEMP_AGE_SECONDS
 from oh_hi_markdown.exceptions import FilesystemError
 
 MARKER_FILENAME = ".ohmd-marker"
 TEMP_PREFIX = ".ohmd-tmp-"
 BACKUP_PREFIX = ".ohmd-backup-"
-STALE_TEMP_AGE_SECONDS = 600  # 10 minutes
 
 logger = logging.getLogger("ohmd")
 
@@ -112,8 +112,8 @@ def _publish_with_force(temp_dir: Path, final_path: Path) -> None:
         # Step 2 failed — restore backup.
         try:
             os.rename(backup_path, final_path)
-        except OSError:
-            pass  # Best effort; original error is more important.
+        except OSError as restore_exc:
+            logger.error("Failed to restore backup %s: %s", backup_path, restore_exc)
         raise FilesystemError(f"Failed to publish output to {final_path}: {exc}") from exc
 
     # Step 3: Delete backup.

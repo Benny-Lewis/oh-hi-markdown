@@ -10,16 +10,22 @@ from datetime import datetime, timezone
 from dateutil import parser as dateutil_parser
 
 from oh_hi_markdown.config import SLUG_MAX_LENGTH, VERSION
+from oh_hi_markdown.exceptions import FilesystemError
 from oh_hi_markdown.provider import FetchResult
 
 
 def _yaml_escape(value: str) -> str:
     """Escape a string for use as a YAML double-quoted value.
 
-    Handles backslashes first, then double quotes, to avoid double-escaping.
+    Handles backslashes first, then double quotes and control characters,
+    to avoid double-escaping.  Per YAML 1.2 section 7.3.1.
     """
     value = value.replace("\\", "\\\\")
     value = value.replace('"', '\\"')
+    value = value.replace("\n", "\\n")
+    value = value.replace("\r", "\\r")
+    value = value.replace("\t", "\\t")
+    value = value.replace("\0", "\\0")
     return value
 
 
@@ -229,8 +235,6 @@ def assemble(fetch_result: FetchResult, markdown: str, temp_dir: str) -> str:
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
     except OSError as exc:
-        from oh_hi_markdown.exceptions import FilesystemError
-
         raise FilesystemError(f"Failed to write article.md: {exc}") from exc
 
     return path

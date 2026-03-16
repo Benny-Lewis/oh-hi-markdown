@@ -9,6 +9,21 @@ TEST_URL = "https://example.com/test-article"
 JINA_URL = f"https://r.jina.ai/{TEST_URL}"
 
 
+def _extract_front_matter_keys(text: str) -> list[str]:
+    """Extract field keys from YAML front matter in order."""
+    keys = []
+    in_fm = False
+    for line in text.split("\n"):
+        if line == "---":
+            if in_fm:
+                break
+            in_fm = True
+            continue
+        if in_fm and ": " in line:
+            keys.append(line.split(":")[0])
+    return keys
+
+
 @responses.activate
 def test_t01_standard_article_with_images(
     tmp_path,
@@ -69,24 +84,10 @@ def test_t01_standard_article_with_images(
     assert article_path.exists()
     article_text = article_path.read_text(encoding="utf-8")
 
-    # Front matter field ordering: title, author, date, source_url, description,
-    # downloaded, tool — per DESIGN.md section 5.
+    # Front matter field ordering — per DESIGN.md section 5.
     assert article_text.startswith("---\n")
-    lines = article_text.split("\n")
-    field_keys = []
-    in_front_matter = False
-    for line in lines:
-        if line == "---":
-            if in_front_matter:
-                break
-            in_front_matter = True
-            continue
-        if in_front_matter and ": " in line:
-            key = line.split(":")[0]
-            field_keys.append(key)
-
     expected_keys = ["title", "author", "date", "source_url", "description", "downloaded", "tool"]
-    assert field_keys == expected_keys
+    assert _extract_front_matter_keys(article_text) == expected_keys
 
     # Verify specific field values.
     assert 'title: "Test Article Title"' in article_text
@@ -187,25 +188,10 @@ def test_t02_article_with_no_images(tmp_path):
     assert article_path.exists()
     article_text = article_path.read_text(encoding="utf-8")
 
-    # Front matter field ordering: title, author, date, source_url, description,
-    # downloaded, tool — per DESIGN.md section 5.
+    # Front matter field ordering — per DESIGN.md section 5.
     assert article_text.startswith("---\n")
-    lines = article_text.split("\n")
-    # Find field keys in order.
-    field_keys = []
-    in_front_matter = False
-    for line in lines:
-        if line == "---":
-            if in_front_matter:
-                break
-            in_front_matter = True
-            continue
-        if in_front_matter and ": " in line:
-            key = line.split(":")[0]
-            field_keys.append(key)
-
     expected_keys = ["title", "author", "date", "source_url", "description", "downloaded", "tool"]
-    assert field_keys == expected_keys
+    assert _extract_front_matter_keys(article_text) == expected_keys
 
     # Verify specific field values
     assert 'title: "Test Article Title"' in article_text
