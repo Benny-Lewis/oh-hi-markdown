@@ -8,17 +8,17 @@
 
 ## 1. Test Classification by Module
 
-28 unit tests grouped into 9 areas aligned with the module boundaries from `DESIGN.md`.
+32 unit tests grouped into 9 areas aligned with the module boundaries from `DESIGN.md`.
 
 Tests without formal acceptance criteria IDs (T-10, T-24, T-21, T-28) map to requirements that lack IDs in `REQUIREMENTS.md` — URL validation rules, stale cleanup safety, and CLI entry points. These are shown with parenthetical descriptions in the forward map.
 
 | Area | Module(s) | Tests | What's being verified |
 |------|-----------|-------|-----------------------|
 | CLI / entry points | `cli` | T-10, T-24, T-28 | URL validation, exit codes, alias equivalence |
-| Provider / Jina | `provider`, `jina` | T-11, T-12, T-27 | HTTP errors, rate limiting, empty content |
+| Provider / Jina | `provider`, `jina` | T-11, T-12, T-27, test_f2 | HTTP errors, rate limiting, empty content, X-With-Generated-Alt conditional |
 | Metadata / front matter | `writer` | T-13, T-14, T-25 | Slug generation, title fallback, field order/omission |
 | Markdown parsing | `parser` | T-16, T-17, T-22 | Data URIs, empty alt, parenthesized URLs |
-| Image download / dedupe | `images` | T-03, T-04, T-05, T-15, T-19, T-26 | Dedup, Content-Type, query params, filename collision, missing headers |
+| Image download / dedupe | `images` | T-03, T-04, T-05, T-15, T-19, T-26, test_octet_stream×2 | Dedup, Content-Type, query params, filename collision, missing headers, octet-stream fallback |
 | Retry / error handling | `images` | T-06, T-07, T-23 | Retry backoff, all-fail, redirect limit |
 | Temp dir / publish / rollback | `publisher` | T-08, T-09, T-18, T-20, T-21 | Conflict, force, atomic write, rollback, stale cleanup |
 | Logging | `log` | (none — cross-cutting) | Redaction filter, dual-handler setup, encoding fallback. Verified via pipeline/image tests (L-1 through L-4) and by inspection during logging module implementation |
@@ -109,6 +109,9 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 | T-26 | D-14, D-1 |
 | T-27 | F-6 |
 | T-28 | (packaging / entry point verification) |
+| test_f2 | F-2 (header absent without API key) |
+| test_octet_stream_accepted | D-14 (octet-stream + known extension accepted) |
+| test_octet_stream_rejected | D-14 (octet-stream + unknown extension rejected) |
 
 ### Reverse map: acceptance criteria -> tests
 
@@ -137,7 +140,7 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 | D-11 | Image count > 50 warning | (verified by inspection during logging module implementation) |
 | D-12 | SVG saved as `.svg` | T-01 |
 | D-13 | Different URLs, same binary not deduped | T-03 |
-| D-14 | Non-`image/*` Content-Type rejected | T-19, T-26 |
+| D-14 | Non-`image/*` Content-Type rejected | T-19, T-26, test_octet_stream×2 |
 | R-1 | Successful images rewritten to `./images/` | T-01 |
 | R-2 | Alt text preserved exactly | T-01, T-17 |
 | R-3 | Failed images keep original URL | T-07, T-19 |
@@ -175,7 +178,7 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 | **Ubuntu (latest)** | pytest | pytest | pytest |
 | **macOS (latest)** | pytest | pytest | pytest |
 
-6 matrix cells. All 28 unit tests must pass on all 6 cells.
+6 matrix cells. All 32 unit tests must pass on all 6 cells.
 
 ### Additional CI checks
 
@@ -198,7 +201,7 @@ URLs selected and tested 2026-03-17. Full results in `docs/integration-test-resu
 
 ### Release criteria
 
-1. All 28 unit tests pass on all 6 CI matrix cells
+1. All 32 unit tests pass on all 6 CI matrix cells
 2. `ruff check` and `ruff format --check` pass
 3. Integration tests I-01 through I-05 run and documented
 4. All acceptance criteria covered per traceability map — gap resolution items (F-3, F-4 unreachable path, O-3) must have their planned assertions implemented before release

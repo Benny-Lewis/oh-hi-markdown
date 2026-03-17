@@ -34,7 +34,7 @@ Existing tools solve pieces of this but not the full pipeline. Jina Reader produ
 ### What it does
 
 - Accepts a single URL as input
-- Fetches clean, content-extracted markdown via Jina Reader API (using `X-With-Generated-Alt: true` for AI image captions)
+- Fetches clean, content-extracted markdown via Jina Reader API (using `X-With-Generated-Alt: true` for AI image captions when API key is set)
 - Parses the markdown for image references
 - Downloads each image to a local `images/` subfolder
 - Rewrites image URLs in the markdown to relative local paths

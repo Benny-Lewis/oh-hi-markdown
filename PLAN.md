@@ -150,7 +150,7 @@
 
 ### 10. Tag release
 
-- Confirm all 28 unit tests pass on macOS and Linux (CI green)
+- Confirm all 32 unit tests pass on macOS and Linux (CI green)
 - Confirm integration tests have been run and documented
 - Confirm README and `--help` are complete
 - Tag `v0.1.0`
