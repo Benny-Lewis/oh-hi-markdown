@@ -186,15 +186,15 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 
 I-01 through I-05 are run manually before release, not in CI. They hit real URLs and require network access.
 
-| ID | Scenario |
-|----|----------|
-| I-01 | Real tech blog post with mixed image types (PNG, JPG, SVG) |
-| I-02 | Real news article with hero image and inline photos |
-| I-03 | Real documentation page with diagrams and code screenshots |
-| I-04 | Article with many images (10+) |
-| I-05 | Article where some images are hotlink-protected |
+| ID | Scenario | URL | Result |
+|----|----------|-----|--------|
+| I-01 | Real tech blog post with mixed image types (PNG, JPG, SVG) | `github.blog/engineering/.../githubs-engineering-fundamentals-program-...` | 6/6 images |
+| I-02 | Real article with hero image and inline photos | `en.wikipedia.org/wiki/2024_Summer_Olympics` | 301/301 images |
+| I-03 | Real documentation page with diagrams and code screenshots | `docs.github.com/en/pull-requests/.../reviewing-proposed-changes-...` | 16/16 images |
+| I-04 | Article with many images (10+) | `en.wikipedia.org/wiki/Hubble_Space_Telescope` | 81/81 images |
+| I-05 | Article where some images are hotlink-protected | `medium.com/codex/step-by-step-guide-to-data-visualizations-...` | 47/47 images |
 
-Specific URLs are selected during the manual integration testing phase (see `PLAN.md` step 8). Results are documented with URL, what it exercises, and outcome.
+URLs selected and tested 2026-03-17. Full results in `docs/integration-test-results.md`.
 
 ### Release criteria
 
