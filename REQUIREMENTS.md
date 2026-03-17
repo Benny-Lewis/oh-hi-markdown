@@ -8,7 +8,7 @@
 **Repository:** `github.com/Benny-Lewis/oh-hi-markdown`
 
 **Version:** v1 (MVP)
-**Last updated:** 2026-03-13
+**Last updated:** 2026-03-17
 **Status:** ✅ Locked — v1 implementation baseline
 
 > This document is the implementation contract for oh-hi-markdown v1. Changes from this point require a noted reason, updated date, and review before merging.
@@ -34,7 +34,7 @@ Existing tools solve pieces of this but not the full pipeline. Jina Reader produ
 ### What it does
 
 - Accepts a single URL as input
-- Fetches clean, content-extracted markdown via Jina Reader API (using `X-With-Generated-Alt: true` for AI image captions)
+- Fetches clean, content-extracted markdown via Jina Reader API (using `X-With-Generated-Alt: true` for AI image captions when API key is set)
 - Parses the markdown for image references
 - Downloads each image to a local `images/` subfolder
 - Rewrites image URLs in the markdown to relative local paths
@@ -295,7 +295,7 @@ See "Metadata Fallback Rules" and "Front Matter Serialization Rules" for detaile
 | ID | Criterion |
 |---|---|
 | F-1 | Given a valid, publicly accessible article URL, the tool shall retrieve markdown content from Jina Reader and proceed to the image processing step. |
-| F-2 | The Jina request shall include the `X-With-Generated-Alt: true` header. |
+| F-2 | When `JINA_API_KEY` is set, the Jina request shall include the `X-With-Generated-Alt: true` header. When no API key is configured, the header shall be omitted (Jina requires authentication for this feature). |
 | F-3 | If a `JINA_API_KEY` environment variable is set, the tool shall include it as a Bearer token in the request. |
 | F-4 | If Jina returns an HTTP error (4xx, 5xx) or is unreachable, the tool shall exit with exit code 2 and a descriptive error message. No output folder shall be created. |
 | F-5 | If Jina returns a rate-limit response (429), the tool shall exit with exit code 2 and suggest that setting a `JINA_API_KEY` environment variable may resolve the issue. |

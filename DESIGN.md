@@ -1,7 +1,7 @@
 # oh-hi-markdown — Technical Design Document
 
-**Version:** 1.1
-**Last updated:** 2026-03-13
+**Version:** 1.2
+**Last updated:** 2026-03-17
 **Status:** Complete — all sections drafted
 **Source of truth:** `REQUIREMENTS.md` (locked v1 baseline)
 
@@ -102,7 +102,7 @@ class FetchResult:
 | Header | Value | Condition |
 |--------|-------|-----------|
 | `Accept` | `application/json` | Always — returns structured JSON with metadata |
-| `X-With-Generated-Alt` | `true` | Always — AI image captions |
+| `X-With-Generated-Alt` | `true` | Only when `JINA_API_KEY` is set — Jina requires auth for AI image captions |
 | `User-Agent` | `ohmd/{version}` | Always — consistent with image requests |
 | `Authorization` | `Bearer {key}` | Only if `JINA_API_KEY` env var is set |
 
@@ -278,7 +278,9 @@ After a successful HTTP response (status 200), the Content-Type determines accep
 | Scenario | Action |
 |----------|--------|
 | Content-Type present, starts with `image/` | **Accept.** Use Content-Type to determine file extension. |
-| Content-Type present, NOT `image/*` | **Reject immediately.** No retry. Catches HTML error pages, anti-hotlink redirects, CDN errors. |
+| Content-Type is `application/octet-stream`, URL has known image extension | **Accept.** Use the URL extension. Common on GCS and similar CDNs, especially for WebP. |
+| Content-Type is `application/octet-stream`, URL has no known image extension | **Reject.** |
+| Content-Type present, NOT `image/*` and NOT `application/octet-stream` | **Reject immediately.** No retry. Catches HTML error pages, anti-hotlink redirects, CDN errors. |
 | Content-Type missing, URL has known image extension (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, `.avif`, `.bmp`, `.tiff`) | **Accept.** Use the URL extension. |
 | Content-Type missing, URL has no recognizable image extension | **Reject.** |
 | Content-Type is `image/*` but unknown subtype, URL has extension | **Accept.** Use URL extension. |

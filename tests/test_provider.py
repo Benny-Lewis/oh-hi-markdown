@@ -42,6 +42,38 @@ def test_t11_jina_http_500():
     assert sent_headers["Authorization"] == "Bearer test-secret-key"
     assert sent_headers["User-Agent"] == f"ohmd/{VERSION}"
 
+    # F-2: X-With-Generated-Alt is sent when api_key is present.
+    assert sent_headers["X-With-Generated-Alt"] == "true"
+
+
+# ── F-2: X-With-Generated-Alt absent without API key ──────────────
+
+
+@responses.activate
+def test_f2_generated_alt_absent_without_api_key():
+    """F-2: X-With-Generated-Alt header must NOT be sent when no API key
+    is configured (Jina requires auth for this feature)."""
+    responses.add(
+        responses.GET,
+        JINA_URL,
+        json={
+            "code": 200,
+            "status": 20000,
+            "data": {
+                "title": "Test",
+                "content": "Some content",
+                "url": TEST_URL,
+            },
+        },
+        status=200,
+    )
+
+    provider = JinaProvider(api_key=None)
+    provider.fetch(TEST_URL)
+
+    sent_headers = responses.calls[0].request.headers
+    assert "X-With-Generated-Alt" not in sent_headers
+
 
 # ── Gap F-4: ConnectionError → ProviderUnreachableError ──────────────
 
