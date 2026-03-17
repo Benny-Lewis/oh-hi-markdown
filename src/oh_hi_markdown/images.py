@@ -325,9 +325,24 @@ def download_all(
         if content_type:
             mime = content_type.split(";")[0].strip().lower()
             if not mime.startswith("image/"):
-                logger.warning("Rejected %s: non-image Content-Type '%s'", ref.url, content_type)
-                resp.close()
-                continue
+                if mime == "application/octet-stream":
+                    # Many CDNs (e.g. GCS) serve images as octet-stream;
+                    # fall back to URL extension check.
+                    url_ext = _extract_url_extension(ref.url)
+                    if url_ext not in _KNOWN_EXTENSIONS:
+                        logger.warning(
+                            "Rejected %s: Content-Type 'application/octet-stream'"
+                            " and no known image extension",
+                            ref.url,
+                        )
+                        resp.close()
+                        continue
+                else:
+                    logger.warning(
+                        "Rejected %s: non-image Content-Type '%s'", ref.url, content_type
+                    )
+                    resp.close()
+                    continue
         else:
             # No Content-Type header — accept only if URL has a known image extension.
             url_ext = _extract_url_extension(ref.url)

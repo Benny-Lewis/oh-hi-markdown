@@ -47,11 +47,11 @@ class JinaProvider:
 
         headers: dict[str, str] = {
             "Accept": "application/json",
-            "X-With-Generated-Alt": "true",
             "User-Agent": f"ohmd/{VERSION}",
         }
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
+            headers["X-With-Generated-Alt"] = "true"
 
         auth_status = "Bearer ***" if self._api_key else "none"
         logger.debug("Jina request: GET %s (Authorization: %s)", jina_url, auth_status)
