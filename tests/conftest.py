@@ -2,6 +2,8 @@
 
 import pytest
 
+from oh_hi_markdown.provider import FetchResult
+
 
 @pytest.fixture
 def sample_fetch_result():
@@ -9,8 +11,19 @@ def sample_fetch_result():
 
     Used by: T-01, T-02 (no-images variant), T-13, T-14 (overrides title to None), T-25.
     """
-    # Will be populated when provider.FetchResult is implemented
-    pytest.skip("FetchResult not yet implemented")
+    return FetchResult(
+        markdown=(
+            "# Test Article\n\nSome content.\n\n"
+            "![Test image](https://example.com/image1.png)\n\n"
+            "![Another image](https://example.com/image2.jpg)\n\n"
+            "![Diagram](https://example.com/diagram.svg)\n"
+        ),
+        title="Test Article Title",
+        author="Jane Doe",
+        date="2026-01-15T10:00:00Z",
+        description="A test article description",
+        source_url="https://example.com/test-article",
+    )
 
 
 @pytest.fixture
@@ -31,6 +44,12 @@ def jina_success_response():
             "![Another image](https://example.com/image2.jpg)\n\n"
             "![Diagram](https://example.com/diagram.svg)\n",
             "publishedTime": "2026-01-15T10:00:00Z",
+            "metadata": {
+                "author": "Jane Doe",
+                "article:author": "Jane Doe",
+                "og:author": "J. Doe",
+                "article:published_time": "2026-01-15",
+            },
             "usage": {"tokens": 42},
         },
     }
