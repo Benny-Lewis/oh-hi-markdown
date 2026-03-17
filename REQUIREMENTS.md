@@ -835,30 +835,6 @@ All required unit tests (T-01 through T-28) must pass on a clean environment (ma
 
 ---
 
-## Future Roadmap (v2+)
+## Future Roadmap & Backlog
 
-These are parked ideas from the design process, roughly prioritized:
-
-1. **Own vision model integration** — Use Claude API (or similar) to generate richer image descriptions, replacing dependency on Jina's captioning.
-2. **Alt text quality assessment** — AI evaluates existing alt text; if low quality, enhance or supplement it; if good, preserve it and optionally add a secondary detailed description.
-3. **Image filtering controls** — Flags to skip decorative images (icons, avatars, logos) while keeping content images; needs careful design to avoid false positives.
-4. **Configurable front matter** — Flags to control which metadata fields are included.
-5. **Folder collision options** — `--on-conflict {fail,overwrite,suffix}` flag. Default changes to `suffix` (timestamp-based) in a future version.
-6. **Batch processing** — Accept multiple URLs or a file of URLs.
-7. **Pluggable content extraction** — Swap Jina for percollate, readability-cli, or other backends via a `--provider` flag.
-8. **CLI UI improvements** — `--verbose` and `--quiet` flags, progress bars, color output via `rich`.
-9. **MCP server / Claude Code skill** — Expose as a tool that AI agents can invoke directly.
-10. **Offline / self-hosted mode** — Use self-hosted Jina or local Readability.js pipeline with no external API calls.
-11. **Shared SSRF validation helper** — Extract `is_private_host()` from `cli.validate_url` and `images._is_private_url` into a common module to prevent drift between the two implementations.
-12. **Non-destructive log redaction** — `RedactionFilter` currently mutates `record.msg` in place; store redacted output in a custom attribute so handlers without the filter still see the original message.
-13. **Logging test isolation** — Add an autouse pytest fixture that calls `shutdown_logging()` after each test to prevent cross-test handler contamination from the module-level globals.
-14. **CLI exit code integration test** — Test `main()` end-to-end with invalid URLs and assert the actual exit code (currently only unit-tested via `validate_url`).
-15. **`_safe_get` redirect hop counting test** — Test with actual 302 responses via `responses` library instead of mocking `Session.get` directly, to exercise the full redirect-counting loop.
-
----
-
-## Open Questions
-
-- **Alt text architecture (v2):** When existing alt text is present, should AI descriptions replace it, supplement it, or be added as a separate field? Needs more design work. Initial thinking: preserve original, add AI description as a secondary field if the original is substantive; replace if the original is empty/generic.
-- **Image format handling (post-v1):** Should very large images be optionally compressed? Should WebP be converted to PNG/JPG for wider compatibility? TBD based on real-world usage.
-- **HTML `<img>` support:** Should this be promoted from best-effort to fully supported in a future version? Depends on how often Jina emits `<img>` tags in practice.
+See [BACKLOG.md](BACKLOG.md) for v2+ feature ideas, deferred code quality items, and open questions.
