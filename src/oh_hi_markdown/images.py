@@ -7,7 +7,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 import requests
 
@@ -75,10 +75,8 @@ def _safe_get(
             location = resp.headers.get("Location", "")
             if not location:
                 break  # No Location header — treat as final response.
-            # Resolve relative redirects.
-            if location.startswith("/"):
-                parsed = urlparse(current_url)
-                location = f"{parsed.scheme}://{parsed.netloc}{location}"
+            # Resolve relative redirects (handles /, ../, bare filenames, ?query).
+            location = urljoin(current_url, location)
             if _is_private_url(location):
                 raise requests.ConnectionError(
                     f"Redirect to private/internal address blocked: {location}"
