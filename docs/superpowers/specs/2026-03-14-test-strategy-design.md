@@ -81,7 +81,7 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 
 | Test | Criteria covered |
 |------|-----------------|
-| T-01 | F-1, F-2, P-1, D-1, D-4, D-5, D-9, D-12, R-1, R-2, S-1, S-2, S-3, S-4, L-1, L-3, O-1, O-2 |
+| T-01 | F-1, P-1, D-1, D-4, D-5, D-9, D-12, R-1, R-2, S-1, S-2, S-3, S-4, L-1, L-3, O-1, O-2 |
 | T-02 | F-1, S-1, S-2, S-3, O-1, O-2 |
 | T-03 | D-2, D-13 |
 | T-04 | D-1 |
@@ -115,7 +115,7 @@ All tests that produce filesystem output use pytest's built-in `tmp_path` fixtur
 | Criteria | Description | Covered by |
 |----------|-------------|-----------|
 | F-1 | Valid URL triggers Jina fetch | T-01, T-02 |
-| F-2 | `X-With-Generated-Alt: true` header sent | T-01 |
+| F-2 | `X-With-Generated-Alt: true` header sent when API key set, omitted otherwise | T-11 (present), test_f2 (absent) |
 | F-3 | `JINA_API_KEY` included as Bearer token when set | — (see gap resolution) |
 | F-4 | Jina HTTP error or unreachable -> exit 2 | T-11 (HTTP error path) |
 | F-5 | Jina 429 -> exit 2, suggest API key | T-12 |

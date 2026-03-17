@@ -193,3 +193,49 @@ def test_t26_missing_content_type(tmp_path, jpg_bytes):
     assert (images_dir / "001-photo.jpg").exists()
     image_files = list(images_dir.iterdir())
     assert len(image_files) == 1
+
+
+# ── Octet-stream Content-Type handling ────────────────────────────
+
+
+@responses.activate
+def test_octet_stream_with_known_extension_accepted(tmp_path, png_bytes):
+    """application/octet-stream with a known image extension in the URL:
+    image accepted and saved (common on GCS and similar CDNs)."""
+    url = "https://storage.example.com/images/photo.webp"
+    refs = [ImageRef(alt="img", url=url, original_match=f"![img]({url})")]
+
+    responses.add(
+        responses.GET,
+        url,
+        body=png_bytes,
+        status=200,
+        content_type="application/octet-stream",
+    )
+
+    result = download_all(refs, "https://example.com/article", tmp_path)
+
+    assert url in result
+    assert result[url].filename == "001-photo.webp"
+    assert (tmp_path / "images" / "001-photo.webp").exists()
+
+
+@responses.activate
+def test_octet_stream_with_unknown_extension_rejected(tmp_path):
+    """application/octet-stream with no recognizable image extension:
+    rejected (same logic as missing Content-Type)."""
+    url = "https://storage.example.com/blob/abc123"
+    refs = [ImageRef(alt="img", url=url, original_match=f"![img]({url})")]
+
+    responses.add(
+        responses.GET,
+        url,
+        body=b"\x00\x01\x02\x03",
+        status=200,
+        content_type="application/octet-stream",
+    )
+
+    result = download_all(refs, "https://example.com/article", tmp_path)
+
+    assert url not in result
+    assert not (tmp_path / "images").exists()

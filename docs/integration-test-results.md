@@ -15,7 +15,9 @@
 | I-02 | PASS | 301/301 | Wikipedia (2024 Summer Olympics) |
 | I-03 | PASS | 16/16 | GitHub Docs (PR review guide) |
 | I-04 | PASS | 81/81 | Wikipedia (Hubble Space Telescope) |
-| I-05 | PASS (partial) | 47/47 | Medium (Python data viz tutorial) |
+| I-05 | PASS* | 47/47 | Medium (Python data viz tutorial) |
+
+*\* Hotlink protection not exercised — Medium's CDN serves images without referrer checks. Graceful degradation path covered by unit tests T-07/T-19.*
 
 **Bugs found:** 2 (both fixed in this branch)
 
