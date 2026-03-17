@@ -211,7 +211,13 @@ def generate_front_matter(
     return "\n".join(lines) + "\n"
 
 
-def assemble(fetch_result: FetchResult, markdown: str, temp_dir: str) -> str:
+def assemble(
+    fetch_result: FetchResult,
+    markdown: str,
+    temp_dir: str,
+    *,
+    title: str | None = None,
+) -> str:
     """Assemble front matter and markdown into article.md.
 
     Writes the concatenation of front matter + blank line + markdown content
@@ -221,12 +227,13 @@ def assemble(fetch_result: FetchResult, markdown: str, temp_dir: str) -> str:
         fetch_result: The fetch result containing article metadata.
         markdown: The markdown content (possibly with rewritten image paths).
         temp_dir: Directory to write article.md into.
+        title: Pre-computed title from generate_slug(). If None, derives it.
 
     Returns:
         The path to the written article.md file.
     """
     downloaded = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    front_matter = generate_front_matter(fetch_result, downloaded)
+    front_matter = generate_front_matter(fetch_result, downloaded, title=title)
 
     content = front_matter + "\n" + markdown
     path = os.path.join(temp_dir, "article.md")

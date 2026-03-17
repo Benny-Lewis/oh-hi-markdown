@@ -95,5 +95,9 @@ def main() -> None:
         print(f"Error: Unexpected error: {exc}", file=sys.stderr)
         sys.exit(4)
 
+    if result.images_found > 0:
+        print(
+            f"{result.outcome}: {result.images_downloaded}/{result.images_found} images downloaded"
+        )
     print(f"Saved to {result.output_path}")
     sys.exit(0)

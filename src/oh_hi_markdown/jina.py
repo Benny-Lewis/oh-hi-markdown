@@ -53,8 +53,8 @@ class JinaProvider:
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
 
-        auth_header = headers.get("Authorization", "none")
-        logger.debug("Jina request: GET %s (Authorization: %s)", jina_url, auth_header)
+        auth_status = "Bearer ***" if self._api_key else "none"
+        logger.debug("Jina request: GET %s (Authorization: %s)", jina_url, auth_status)
 
         start_time = time.monotonic()
         try:

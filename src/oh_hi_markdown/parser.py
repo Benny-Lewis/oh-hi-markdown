@@ -55,6 +55,9 @@ def rewrite(
     Returns:
         The markdown text with image URLs rewritten.
     """
+    # Note: str.replace replaces ALL occurrences of original_match in the
+    # markdown, which could incorrectly rewrite matches inside code blocks or
+    # HTML comments.  Acceptable for v1 with Jina's predictable output.
     for ref in image_refs:
         local_filename = url_map.get(ref.url)
         if local_filename is not None:

@@ -25,7 +25,7 @@ _REDACT_REPLACEMENT = "[REDACTED]"
 def _terminal_supports_utf8() -> bool:
     """Return True if stderr's encoding can represent UTF-8 symbols."""
     encoding = getattr(sys.stderr, "encoding", None) or ""
-    return encoding.lower().replace("-", "") in {"utf8", "utf_8"}
+    return encoding.lower().replace("-", "").startswith("utf8")
 
 
 class OhmdConsoleFormatter(logging.Formatter):

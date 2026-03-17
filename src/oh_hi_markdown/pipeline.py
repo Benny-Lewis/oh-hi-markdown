@@ -35,8 +35,9 @@ def run(
 ) -> RunResult:
     """Execute the full pipeline for *url*.
 
-    Implements DESIGN.md section 9 steps 2-9, 11-12.
-    Step 1 (stale temp cleanup) is deferred to slice 10.
+    Implements DESIGN.md section 9. Steps are reordered from the spec:
+    fetch (3) → slug (4) → conflict check (2) → stale cleanup (1) → create temp (6)
+    because the slug depends on the fetched title.
 
     Args:
         url: The article URL to fetch.
@@ -57,7 +58,7 @@ def run(
     fetch_result = provider.fetch(url)
 
     # Step 4: Generate slug from fetch result (writer)
-    slug, _title = generate_slug(fetch_result)
+    slug, title = generate_slug(fetch_result)
     final_path = Path(output_dir) / slug
 
     # Step 2: Check if final output path already exists (fail fast if not --force)
@@ -72,7 +73,9 @@ def run(
 
     logger.info("Fetched: %s (title: %s)", url, fetch_result.title or "<untitled>")
 
-    # Initialize counters so the finally block can always log a summary.
+    # Initialize counters and outcome so the finally block and RunResult
+    # construction can always reference them safely.
+    outcome = "Failure"
     images_found = 0
     images_downloaded = 0
     images_failed = 0
@@ -98,7 +101,7 @@ def run(
         markdown = rewrite(fetch_result.markdown, image_refs, url_map)
 
         # Step 9: Assemble article.md in temp directory (writer)
-        assemble(fetch_result, markdown, str(temp_dir))
+        assemble(fetch_result, markdown, str(temp_dir), title=title)
 
         logger.info("Assembled article.md")
 

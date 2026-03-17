@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import logging
 import re
 import time
@@ -34,8 +35,6 @@ def _is_private_url(url: str) -> bool:
     Used to prevent SSRF via image redirect — validates the final URL after
     redirects are followed.
     """
-    import ipaddress
-
     parsed = urlparse(url)
     hostname = (parsed.hostname or "").lower()
     if hostname == "localhost":
@@ -72,6 +71,7 @@ def _safe_get(
             allow_redirects=False,
         )
         if resp.is_redirect:
+            resp.close()  # Release the connection before following the redirect.
             location = resp.headers.get("Location", "")
             if not location:
                 break  # No Location header — treat as final response.
@@ -326,6 +326,7 @@ def download_all(
             mime = content_type.split(";")[0].strip().lower()
             if not mime.startswith("image/"):
                 logger.warning("Rejected %s: non-image Content-Type '%s'", ref.url, content_type)
+                resp.close()
                 continue
         else:
             # No Content-Type header — accept only if URL has a known image extension.
@@ -335,6 +336,7 @@ def download_all(
                     "Rejected %s: no Content-Type and no known image extension",
                     ref.url,
                 )
+                resp.close()
                 continue
 
         # Download body only after Content-Type and SSRF checks pass.

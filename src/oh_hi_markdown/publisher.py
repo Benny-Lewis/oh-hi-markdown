@@ -62,6 +62,8 @@ def create_temp_dir(parent_dir: Path) -> Path:
 
     Returns the path to the new temp directory.
     """
+    if not parent_dir.exists():
+        raise FilesystemError(f"Output directory does not exist: {parent_dir}")
     temp_name = f"{TEMP_PREFIX}{uuid.uuid4()}"
     temp_path = parent_dir / temp_name
     temp_path.mkdir(parents=True, exist_ok=False)
