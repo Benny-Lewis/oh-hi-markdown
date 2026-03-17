@@ -849,6 +849,11 @@ These are parked ideas from the design process, roughly prioritized:
 8. **CLI UI improvements** — `--verbose` and `--quiet` flags, progress bars, color output via `rich`.
 9. **MCP server / Claude Code skill** — Expose as a tool that AI agents can invoke directly.
 10. **Offline / self-hosted mode** — Use self-hosted Jina or local Readability.js pipeline with no external API calls.
+11. **Shared SSRF validation helper** — Extract `is_private_host()` from `cli.validate_url` and `images._is_private_url` into a common module to prevent drift between the two implementations.
+12. **Non-destructive log redaction** — `RedactionFilter` currently mutates `record.msg` in place; store redacted output in a custom attribute so handlers without the filter still see the original message.
+13. **Logging test isolation** — Add an autouse pytest fixture that calls `shutdown_logging()` after each test to prevent cross-test handler contamination from the module-level globals.
+14. **CLI exit code integration test** — Test `main()` end-to-end with invalid URLs and assert the actual exit code (currently only unit-tested via `validate_url`).
+15. **`_safe_get` redirect hop counting test** — Test with actual 302 responses via `responses` library instead of mocking `Session.get` directly, to exercise the full redirect-counting loop.
 
 ---
 
