@@ -150,7 +150,7 @@
 
 ---
 
-### 10. Tag release
+### 10. Tag release ✅
 
 - Confirm all 32 unit tests pass on macOS and Linux (CI green)
 - Confirm integration tests have been run and documented
@@ -160,3 +160,5 @@
 - Capture any post-release findings into a v0.2 backlog
 
 **Produces:** Tagged release, published package, v0.2 backlog
+
+**Completed (2026-03-17):** All preconditions verified (32 tests passing, CI green, integration tests documented, README and --help complete). Tagged `v0.1.0`. Installable via `pip install git+https://github.com/Benny-Lewis/oh-hi-markdown.git@v0.1.0`. v0.2 backlog already captured in BACKLOG.md.
