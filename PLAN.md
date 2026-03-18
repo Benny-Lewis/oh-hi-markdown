@@ -137,7 +137,7 @@
 
 ---
 
-### 9. Finish docs
+### 9. Finish docs ✅
 
 - Flesh out README: install instructions, usage examples, environment variable setup, known limitations, link to `REQUIREMENTS.md`
 - Clean up `--help` output to match the CLI spec exactly
@@ -145,6 +145,8 @@
 - Add a CONTRIBUTING.md if desired for an open source project
 
 **Produces:** Complete user-facing documentation
+
+**Completed (2026-03-17):** README fully rewritten with install instructions, usage examples, output structure, environment variables, exit codes, how-it-works pipeline description, privacy/data section (Jina submission + Referer header), and known limitations. `--help` output updated to match CLI spec. CONTRIBUTING.md added with setup, testing, project structure, architecture overview, and submission guidelines.
 
 ---
 

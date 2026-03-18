@@ -32,3 +32,9 @@ Thumbs.db
 
 # Tool artifacts
 *.log
+
+# Claude Code
+.claude/
+
+# Temp review/repro directories
+.tmpreview/
