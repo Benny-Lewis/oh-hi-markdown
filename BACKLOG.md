@@ -11,6 +11,7 @@ Future improvements, deferred items, and v2+ ideas. Roughly grouped by area, not
 - **Folder collision options** — `--on-conflict {fail,overwrite,suffix}` flag. Default changes to `suffix` (timestamp-based) in a future version.
 - **Batch processing** — Accept multiple URLs or a file of URLs.
 - **Pluggable content extraction** — Swap Jina for percollate, readability-cli, or other backends via a `--provider` flag.
+- **Clickable output path** — Print the full absolute path to the output folder so terminal emulators render it as a clickable link (e.g., `file:///home/user/articles/...` or just the absolute path).
 - **CLI UI improvements** — `--verbose` and `--quiet` flags, progress bars, color output via `rich`.
 - **MCP server / Claude Code skill** — Expose as a tool that AI agents can invoke directly.
 - **Offline / self-hosted mode** — Use self-hosted Jina or local Readability.js pipeline with no external API calls.
